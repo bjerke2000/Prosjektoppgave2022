@@ -1,4 +1,7 @@
+from importlib.resources import path
 import pickle
+from pydoc import pathdirs
+from types import NoneType
 from flask import Flask, redirect, render_template, flash, url_for, session
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FileField, DateField
@@ -93,14 +96,14 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/item/<int:id>')
-def item(id):
-    print(id)
-    item = ItemModel.query.filter_by(id=id).first()
-    print(item)
+@app.route('/item/<string:path>/<string:name>')
+def item(path,name):
+    item = ItemModel.query.filter_by(path = path, itemname = name).first()
+    if isinstance(item, NoneType):
+        return redirect(url_for('previous', path = path))
     match item.type:
         case 0:#Show contents of folder
-            unchecked_contents = ItemModel.query.filter_by(path = f"{item.path}{item.itemname.split('_')[0]}/")
+            unchecked_contents = ItemModel.query.filter_by(path = f"{item.path}{item.itemname.split('_')[0]}-")
             contents = []
             for items in unchecked_contents:
                 #if PermissionHandler("r", items):
@@ -108,6 +111,17 @@ def item(id):
                     items.owner = UserModel.query.filter_by(id = items.owner).first().name
                     contents.append(items)
             return render_template('folder.html', contents = contents, current_folder = item)
+
+@app.route('/previous/<string:path>')
+def previous(path):
+    print(path)
+    path_list = path.split("-")
+    previous_path = ""
+    for part in path_list[:-2]:
+        previous_path = previous_path + part + "-"
+        print(previous_path)
+    return redirect(url_for('item', path = previous_path, name = path_list[-2:-1]))
+    
             
 
 

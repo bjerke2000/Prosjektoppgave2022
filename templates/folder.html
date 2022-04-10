@@ -1,8 +1,10 @@
 hallo
+<a href="{{url_for('previous', path = current_folder.path)}}">Tilbake</a>
 {% for item in contents %}
     <p>
         Mappenavn: {{item.itemname.split("_")[0]}} <br>
         Eier: {{item.owner}} <br>
         Fil sti: {{item.path}}
+        <a href="{{url_for('item', path = item.path, name = item.itemname)}}">se på meg?</a>
     </p>
 {% endfor %}
