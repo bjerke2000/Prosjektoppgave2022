@@ -1,0 +1,8 @@
+hallo
+{% for item in contents %}
+    <p>
+        Mappenavn: {{item.itemname.split("_")[0]}} <br>
+        Eier: {{item.owner}} <br>
+        Fil sti: {{item.path}}
+    </p>
+{% endfor %}
