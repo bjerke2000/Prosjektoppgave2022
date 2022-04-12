@@ -99,6 +99,7 @@ def index():
 @app.route('/item/<string:path>/<string:name>')
 def item(path,name):
     item = ItemModel.query.filter_by(path = path, itemname = name).first()
+    print(item)
     if isinstance(item, NoneType):
         return redirect(url_for('previous', path = path))
     match item.type:
@@ -108,7 +109,9 @@ def item(path,name):
             for items in unchecked_contents:
                 #if PermissionHandler("r", items):
                 if True:
-                    items.owner = UserModel.query.filter_by(id = items.owner).first().name
+                    #owner_id = items.owner
+                    #owner_name =  UserModel.query.filter_by(id = owner_id).first().name
+                    #items.owner = owner_name
                     contents.append(items)
             return render_template('folder.html', contents = contents, current_folder = item)
 
