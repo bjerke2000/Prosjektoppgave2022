@@ -1,17 +1,11 @@
-{% for categories, message in get_flashed_messages(with_categories=true) %}
-    <div>
-        <p>{{ message }}</p>
-    </div>
-{% endfor %}
-
 <h1>Register</h1>
 
 <form action="" method="post" novalidate>
     {{ form.csrf_token() }}
-    <div>
+    <div class = "mb-3">
         {{ form.name(class='form-control') }}
     </div>
-    <div>
+    <div class = "mb-3">
         {{ form.email(class='form-control') }}
         {% if form.email.errors %}
             <ul>
@@ -21,13 +15,13 @@
             </ul>
         {% endif %}
     </div>   
-    <div>
+    <div class = "mb-3">
         {{ form.password(class='form-control') }}
     </div>
-    <div>
+    <div class = "mb-3">
         {{ form.password_confirm(class='form-control') }}
     </div>
-    <div>
+    <div class = "mb-3">
         {{ form.groups(class='form-control') }}
     </div>
     <div>

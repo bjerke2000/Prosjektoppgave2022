@@ -87,6 +87,32 @@ class LoginForm(FlaskForm):
     )
     submit = SubmitField("Login")
 
+class GroupForm(FlaskForm):
+    group = StringField(
+        "Group Name",
+        validators=[DataRequired()],
+        render_kw={'autofocus' : True, 'placeholder': "Email:"}
+        )
+    members = SelectMultipleField(
+        "Members",
+        choices=[('1', 'root'), ('2', 'Bjerke')],
+        coerce=int
+    )
+
+class FolderForm(FlaskForm):
+    pass
+
+class FileForm(FlaskForm):
+    pass
+
+class EditFileForm(FlaskForm):
+    pass
+
+
+
+
+
+
 db = SQLAlchemy(app)
 
 #===========================TABLES======================================
@@ -150,7 +176,7 @@ class ItemModel(db.Model):
 
 def PermissionHandler(required_priv, object):
     user_groups = current_user.groups.split(",")
-    group_privs = pickle.loads(object.group_privs)
+    group_privs = pickle.loads(object.group_privs) 
     for group, priv in group_privs.items():
         if (str(group) in user_groups and required_priv in priv) or "1" in user_groups or object.owner == current_user.id:
             return True
@@ -180,7 +206,7 @@ def login():
                 flash('Incorrect password','error')
         else:
             flash('User does not exist','error')
-    return render_template("login.html", form=form)
+    return render_template("login.html", form=form, loginpage=True)
 
 @app.route('/logout')
 @login_required
@@ -230,7 +256,7 @@ def item(path,name):
                     #owner_name =  UserModel.query.filter_by(id = owner_id).first().name
                     #items.owner = owner_name
                     contents.append(items)
-            return render_template('folder.html', contents = contents, current_folder = item)
+            return render_template('folder.html', contents = contents, current_folder = item, viewing=True)
         case 1:
             pass
         
