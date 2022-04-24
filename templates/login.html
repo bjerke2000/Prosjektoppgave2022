@@ -1,0 +1,22 @@
+{% for categories, message in get_flashed_messages(with_categories=true) %}
+    <div>
+        <p>{{ message }}</p>
+    </div>
+{% endfor %}
+
+<h1>Register</h1>
+
+<form action="" method="post" novalidate>
+    {{ form.csrf_token() }}
+    <div>
+        {{ form.email(class="form-control") }}
+    </div>
+    <div>
+        {{form.password(class="form-control")}}
+    </div>
+    <div>
+        {{ form.submit(class='form-control') }}
+    </div> 
+</form>
+
+<a href="/register">Register</a></p>

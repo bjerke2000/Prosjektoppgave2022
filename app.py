@@ -29,11 +29,22 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 # Login
-#login_manager = LoginManager()
-#login_manager.init_app(app)
-#login_manager.login_view='login'
-#login_manager.login_message = 'User needs to be logged in to view this poop!'
-#login_manager.login_message_category = 'error'
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view='login'
+login_manager.login_message = 'User needs to be logged in to view this poop!'
+login_manager.login_message_category = 'error'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return UserModel.query.get(int(user_id))
+
+@app.before_request
+def before_request():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=300)
+
+#===========================FORMS=======================================
 
 class RegisterForm(FlaskForm):
     name = StringField(
@@ -63,15 +74,30 @@ class RegisterForm(FlaskForm):
     )
     submit = SubmitField("Register")
 
+class LoginForm(FlaskForm):
+    email = StringField(
+        "Email",
+        validators=[DataRequired()],
+        render_kw={'autofocus' : True, 'placeholder': "Email:"}
+    )
+    password = PasswordField(
+        "Password",
+        validators=[DataRequired()],
+        render_kw={ "placeholder": "Password"},
+    )
+    submit = SubmitField("Login")
+
 db = SQLAlchemy(app)
 
-class UserModel(db.Model):
+#===========================TABLES======================================
+
+class UserModel(db.Model, UserMixin):
     __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True) #"0 AI"
-    password_hash = db.Column(db.String(150), nullable=False) #"skdhfjdshfo"
-    groups = db.Column(db.String(150), nullable = False) #"0,1,2,3..."
+    id = db.Column(db.Integer, primary_key=True) #"Auto Increment"
     name = db.Column(db.String(150), nullable = False) #"Ola Normann"
     email = db.Column(db.String(150), nullable = False, unique = True) #"example@domain.cocaine"
+    password_hash = db.Column(db.String(150), nullable=False) #"skdhfjdshfo"
+    groups = db.Column(db.String(150), nullable = False) #"0,1,2,3..."
 
     def __init__(self, name, email, password_hash, groups):
         self.name = name
@@ -120,6 +146,8 @@ class ItemModel(db.Model):
     private = db.Column(db.Boolean)#0 = public  :  1 = Private
     group_privs = db.Column(db.PickleType)#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D ඞ
 
+#===========================FUNCTIONS===================================
+
 def PermissionHandler(required_priv, object):
     user_groups = current_user.groups.split(",")
     group_privs = pickle.loads(object.group_privs)
@@ -127,10 +155,13 @@ def PermissionHandler(required_priv, object):
         if (str(group) in user_groups and required_priv in priv) or "1" in user_groups or object.owner == current_user.id:
             return True
     return False
-        
+
+
+#===========================ROUTES======================================
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return redirect(url_for("login"))
 
 
 @app.route('/item/<string:path>/<string:name>')
@@ -153,9 +184,11 @@ def item(path,name):
             return render_template('folder.html', contents = contents, current_folder = item)
         case 1:
             pass
-
+        
 @app.route('/previous/<string:path>')
 def previous(path):
+    if path == '.-':
+        return redirect(url_for('item', path = '.-', name = 'Mappe'))
     print(path)
     path_list = path.split("-")
     previous_path = ""
@@ -163,7 +196,26 @@ def previous(path):
         previous_path = previous_path + part + "-"
         print(previous_path)
     return redirect(url_for('item', path = previous_path, name = path_list[-2:-1]))
-    
+
+@app.route("/login", methods=['GET','POST'])
+def login():
+    form = LoginForm()
+    if current_user.is_authenticated:
+        return redirect(url_for('item', path = '.-', name = 'Mappe'))
+    if form.validate_on_submit():
+        email = UserModel.query.filter_by(email = form.email.data).first()
+        if email:
+            #check hashpass
+            if check_password_hash(email.password_hash, form.password.data):
+                login_user(email)
+                flash('Login was successfull', 'success')
+                return redirect(url_for('item', path = '.-', name = 'Mappe'))
+            else:
+                flash('Incorrect password','error')
+        else:
+            flash('User does not exist','error')
+    return render_template("login.html", form=form)
+
 @app.route("/register", methods=['GET','POST'])
 def register():
     form = RegisterForm()
