@@ -1,10 +1,19 @@
-Forrige mappe <a href="{{url_for('previous', path = current_folder.path)}}">Tilbake</a> <br>
-<a href="{{url_for('logout')}}">logout</a>
-{% for item in contents %}
-    <p>
-        Mappenavn: {{item.itemname.split("_")[0]}} <br>
-        Eier: {{item.owner}} <br>
-        Fil sti: {{item.path}}
-        <a href="{{url_for('item', path = item.path, name = item.itemname)}}">se på meg?</a>
-    </p>
-{% endfor %}
+{% extends 'layout.html' %}
+{% block title %}Files{% endblock %}
+{% block body %}
+
+<div class="container">
+    <a class="btn" href="{{url_for('previous', path = current_folder.path)}}">Gå tilbake</a>
+    <div class="card-grid">
+        {% for item in contents %}
+        <div class="card">
+            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/folder.png"
+                    alt="MyFiles"></a>
+            <div class="container">
+                <p>{{item.itemname.split("_")[0]}}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
