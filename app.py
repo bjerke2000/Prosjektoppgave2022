@@ -163,8 +163,57 @@ def PermissionHandler(required_priv, object):
 def index():
     return redirect(url_for("login"))
 
+@app.route("/login", methods=['GET','POST'])
+def login():
+    form = LoginForm()
+    if current_user.is_authenticated:
+        return redirect(url_for('item', path = '.-', name = 'Mappe'))
+    if form.validate_on_submit():
+        email = UserModel.query.filter_by(email = form.email.data).first()
+        if email:
+            #check hashpass
+            if check_password_hash(email.password_hash, form.password.data):
+                login_user(email)
+                flash('Login was successfull', 'success')
+                return redirect(url_for('item', path = '.-', name = 'Mappe'))
+            else:
+                flash('Incorrect password','error')
+        else:
+            flash('User does not exist','error')
+    return render_template("login.html", form=form)
 
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('User has been logget out', 'success')
+    return (redirect(url_for('login')))
+
+
+@app.route("/register", methods=['GET','POST'])
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        user = UserModel.query.filter_by(email = form.email.data).first()
+        if user is None:
+            hashed_pw = generate_password_hash(form.password.data, 'sha256')
+            group_str = str(form.groups.data).strip("[]")
+            user = UserModel(name = form.name.data,
+                email = form.email.data,
+                password_hash = hashed_pw,
+                groups = group_str
+            )
+            db.session.add(user)
+            db.session.commit()
+            return redirect(url_for('login'))
+        else:
+            flash('Email already exists', 'error')
+            return render_template('register.html', form=form)
+    flash(str(form.errors).strip('{}'), 'error')
+    return render_template("register.html", form=form)
+            
 @app.route('/item/<string:path>/<string:name>')
+@login_required
 def item(path,name):
     item = ItemModel.query.filter_by(path = path, itemname = name).first()
     print(item)
@@ -186,6 +235,7 @@ def item(path,name):
             pass
         
 @app.route('/previous/<string:path>')
+#JINJA url_for('previous', path = current_folder.path)
 def previous(path):
     if path == '.-':
         return redirect(url_for('item', path = '.-', name = 'Mappe'))
@@ -197,54 +247,12 @@ def previous(path):
         print(previous_path)
     return redirect(url_for('item', path = previous_path, name = path_list[-2:-1]))
 
-@app.route("/login", methods=['GET','POST'])
-def login():
-    form = LoginForm()
-    if current_user.is_authenticated:
-        return redirect(url_for('item', path = '.-', name = 'Mappe'))
-    if form.validate_on_submit():
-        email = UserModel.query.filter_by(email = form.email.data).first()
-        if email:
-            #check hashpass
-            if check_password_hash(email.password_hash, form.password.data):
-                login_user(email)
-                flash('Login was successfull', 'success')
-                return redirect(url_for('item', path = '.-', name = 'Mappe'))
-            else:
-                flash('Incorrect password','error')
-        else:
-            flash('User does not exist','error')
-    return render_template("login.html", form=form)
-
-@app.route("/register", methods=['GET','POST'])
-def register():
-    form = RegisterForm()
-    if form.validate_on_submit():
-        user = UserModel.query.filter_by(email = form.email.data).first()
-        if user is None:
-            hashed_pw = generate_password_hash(form.password.data, 'sha256')
-            group_str = str(form.groups.data).strip("[]")
-            user = UserModel(name = form.name.data,
-                email = form.email.data,
-                password_hash = hashed_pw,
-                groups = group_str
-            )
-            db.session.add(user)
-            db.session.commit()
-            return redirect(url_for('index'))
-        else:
-            flash('Email already exists', 'error')
-            return render_template('register.html', form=form)
-    print (form.errors)
-    return render_template("register.html", form=form)
-            
 
 
 
 
 
 
-
-# Needs to be at the bottom
+#På bunnj
 if __name__ == "__main__":
     app.run(debug=True)

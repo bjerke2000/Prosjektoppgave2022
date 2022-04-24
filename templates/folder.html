@@ -1,4 +1,5 @@
-Forrige mappe <a href="{{url_for('previous', path = current_folder.path)}}">Tilbake</a>
+Forrige mappe <a href="{{url_for('previous', path = current_folder.path)}}">Tilbake</a> <br>
+<a href="{{url_for('logout')}}">logout</a>
 {% for item in contents %}
     <p>
         Mappenavn: {{item.itemname.split("_")[0]}} <br>
