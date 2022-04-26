@@ -1,13 +1,15 @@
+from email.policy import default
 from importlib.resources import path
-import pickle
+from pickle import load, dump
 from pydoc import pathdirs
 from tokenize import String
 from types import NoneType
+from unicodedata import name
 from wsgiref.validate import validator
 from click import confirm
 from flask import Flask, redirect, render_template, flash, url_for, session
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, FileField, DateField, SelectMultipleField
+from wtforms import StringField, PasswordField, SubmitField, FileField, DateField, SelectMultipleField, SelectField
 from wtforms.validators import DataRequired, EqualTo, Length
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -100,17 +102,36 @@ class GroupForm(FlaskForm):
     )
 
 class FolderForm(FlaskForm):
-    pass
+    itemname = StringField(
+        "ItemName",
+        validators=[DataRequired(), Length(max=50)],
+        render_kw={'autofocus' : True, 'placeholder': "Item name"}
+    )
+    private = SelectField(
+        "Private",
+        choices=[(0,"Public"),(1,"Private")],
+        default=(0,"Public"),
+        coerce=int
+    )
+    r_groups = SelectMultipleField(
+        "Groups with read Privilages",
+        choices=[(3,"All Users"), (1,"Test Group")],
+        coerce=int
+    )
+    rw_groups = SelectMultipleField(
+        "Groups with read and write Privilages",
+        choices=[(3,"All Users"), (1,"Test Group")],
+        coerce=int
+    )
+    submit = SubmitField("Create")
+
+
 
 class FileForm(FlaskForm):
     pass
 
 class EditFileForm(FlaskForm):
     pass
-
-
-
-
 
 
 db = SQLAlchemy(app)
@@ -167,7 +188,7 @@ class ItemModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     owner = db.Column(db.Integer, db.ForeignKey('users.id')) #fk til users id
     type = db.Column(db.Boolean)#0 = mappe : 1 = fil
-    itemname = db.Column(db.String(250), nullable = False) #"filnavn(.filtype om fil)_uuid"
+    itemname = db.Column(db.String(250), nullable = False) #"filnavn(.filtype om fil)~uuid"
     path = db.Column(db.String(500), nullable = False) #"./mappe1/mappe2/mappe3/"
     private = db.Column(db.Boolean)#0 = public  :  1 = Private
     group_privs = db.Column(db.PickleType)#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D ඞ
@@ -181,6 +202,19 @@ def PermissionHandler(required_priv, object):
         if (str(group) in user_groups and required_priv in priv) or "1" in user_groups or object.owner == current_user.id:
             return True
     return False
+
+def GetAvaliableName_helper(path, name):
+    name_number = GetAvaliableName(path, name, 1) 
+    added = "(" + str(name_number) + ")"
+    return name + added
+
+def GetAvaliableName(path, name, iteration):
+    item = ItemModel.query.filter_by(path = path, itemname = name + "(" + str(iteration) + ")").first()
+    if item is None:
+        return iteration
+    else:
+        iteration += 1
+        return GetAvaliableName(path, name, iteration) 
 
 
 #===========================ROUTES======================================
@@ -215,7 +249,6 @@ def logout():
     flash('User has been logget out', 'success')
     return (redirect(url_for('login')))
 
-
 @app.route("/register", methods=['GET','POST'])
 def register():
     form = RegisterForm()
@@ -247,7 +280,7 @@ def item(path,name):
         return redirect(url_for('previous', path = path))
     match item.type:
         case 0:#Show contents of folder
-            unchecked_contents = ItemModel.query.filter_by(path = f"{item.path}{item.itemname.split('_')[0]}-")
+            unchecked_contents = ItemModel.query.filter_by(path = f"{item.path}{item.itemname.split('~')[0]}-")
             contents = []
             for items in unchecked_contents:
                 #if PermissionHandler("r", items):
@@ -273,6 +306,41 @@ def previous(path):
         print(previous_path)
     return redirect(url_for('item', path = previous_path, name = path_list[-2:-1]))
 
+@app.route("/newfolder/<string:path>/<string:parent>", methods=['GET','POST'])
+#JINJA url_for('newfolder', path=current_folder.path, parent=current_folder.itemname)
+@login_required
+def newfolder(path, parent):
+    form = FolderForm()
+    if form.validate_on_submit():
+        itempath = path + parent +"-"
+        item = ItemModel.query.filter_by(path = itempath, itemname = form.itemname.data).first()
+        if item is None:
+            foldername = form.itemname.data
+        else:
+            foldername = GetAvaliableName_helper(itempath, form.itemname.data) #checks for itemname(n), until it finds an avaliable number
+        group_priv_dict = {}
+        for group in form.r_groups.data:
+            group_priv_dict[group] = "r"
+        for group in form.rw_groups.data:
+            group_priv_dict[group] = "rw"
+        newfolder = ItemModel(
+            owner = current_user.id,
+            type = 0,
+            itemname = foldername,
+            path = itempath,
+            private = form.private.data,
+            group_privs = group_priv_dict
+        )
+        db.session.add(newfolder)
+        db.session.commit()
+        flash('Folder created succesfully', 'success')
+        return redirect(url_for('item', path=itempath, name=foldername))
+    flash(str(form.errors).strip('{}'), 'error')
+    return render_template("newfolder.html", form=form)
+    
+        
+        
+            
 
 
 
