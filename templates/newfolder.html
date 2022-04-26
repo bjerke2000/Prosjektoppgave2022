@@ -4,7 +4,7 @@
 {% block body %}
 <div class="container">
     <div class="inputform">
-        <h1 class="mb-3">Login</h1>
+        <h1 class="mb-3">New Folder</h1>
         <form method="POST">
             {{ form.csrf_token() }}
             <div class="mb-3">
@@ -22,10 +22,7 @@
             <div class="mb-3">
                 {{ form.submit(class = "btn") }}
             </div>
-
-
-
         </form>
     </div>
-
+</div>
 {% endblock %}

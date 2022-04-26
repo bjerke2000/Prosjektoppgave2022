@@ -10,7 +10,7 @@ from click import confirm
 from flask import Flask, redirect, render_template, flash, url_for, session
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FileField, DateField, SelectMultipleField, SelectField
-from wtforms.validators import DataRequired, EqualTo, Length
+from wtforms.validators import DataRequired, EqualTo, Length, Email
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
@@ -28,6 +28,9 @@ app.config[
 
 UPLOAD_FOLDER = 'content'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ADMINGROUP=2
+ALLUSERSGROUP=3
+TESTGROUP=1
 
 
 # Login
@@ -56,7 +59,7 @@ class RegisterForm(FlaskForm):
     )
     email = StringField(
         "Email",
-        validators=[DataRequired(), Length(max=150)],
+        validators=[DataRequired(), Length(max=150), Email()],
         render_kw={"placeholder":"Email"},
     )
     password = PasswordField(
@@ -71,8 +74,8 @@ class RegisterForm(FlaskForm):
     )
     groups = SelectMultipleField(
         "Select Field",
-        choices= [('0','All Users'), ('1','Admin')],
-        coerce=str
+        choices= [(ADMINGROUP,'Admin'),(TESTGROUP,'Test Group')],
+        coerce=int
     )
     submit = SubmitField("Register")
 
@@ -115,17 +118,15 @@ class FolderForm(FlaskForm):
     )
     r_groups = SelectMultipleField(
         "Groups with read Privilages",
-        choices=[(3,"All Users"), (1,"Test Group")],
+        choices=[(ALLUSERSGROUP,"All Users"), (TESTGROUP,"Test Group")],
         coerce=int
     )
     rw_groups = SelectMultipleField(
         "Groups with read and write Privilages",
-        choices=[(3,"All Users"), (1,"Test Group")],
+        choices=[(ALLUSERSGROUP,"All Users"), (TESTGROUP,"Test Group")],
         coerce=int
     )
     submit = SubmitField("Create")
-
-
 
 class FileForm(FlaskForm):
     pass
@@ -197,9 +198,9 @@ class ItemModel(db.Model):
 
 def PermissionHandler(required_priv, object):
     user_groups = current_user.groups.split(",")
-    group_privs = pickle.loads(object.group_privs) 
+    group_privs = object.group_privs
     for group, priv in group_privs.items():
-        if (str(group) in user_groups and required_priv in priv) or "1" in user_groups or object.owner == current_user.id:
+        if (str(group) in user_groups and required_priv in priv) or str(ADMINGROUP) in user_groups or object.owner == current_user.id:
             return True
     return False
 
@@ -219,10 +220,12 @@ def GetAvaliableName(path, name, iteration):
 
 #===========================ROUTES======================================
 
+#index redirects to login
 @app.route('/')
 def index():
     return redirect(url_for("login"))
 
+#login user
 @app.route("/login", methods=['GET','POST'])
 def login():
     form = LoginForm()
@@ -242,6 +245,7 @@ def login():
             flash('User does not exist','error')
     return render_template("login.html", form=form, loginpage=True)
 
+#logout user
 @app.route('/logout')
 @login_required
 def logout():
@@ -249,6 +253,7 @@ def logout():
     flash('User has been logget out', 'success')
     return (redirect(url_for('login')))
 
+#Register new user
 @app.route("/register", methods=['GET','POST'])
 def register():
     form = RegisterForm()
@@ -256,7 +261,9 @@ def register():
         user = UserModel.query.filter_by(email = form.email.data).first()
         if user is None:
             hashed_pw = generate_password_hash(form.password.data, 'sha256')
-            group_str = str(form.groups.data).strip("[]")
+            grouplist = form.groups.data
+            grouplist.append(ALLUSERSGROUP)#adds all users group
+            group_str = str(grouplist).strip("[]")
             user = UserModel(name = form.name.data,
                 email = form.email.data,
                 password_hash = hashed_pw,
@@ -270,7 +277,8 @@ def register():
             return render_template('register.html', form=form)
     flash(str(form.errors).strip('{}'), 'error')
     return render_template("register.html", form=form)
-            
+
+#Display a file or folder
 @app.route('/item/<string:path>/<string:name>')
 @login_required
 def item(path,name):
@@ -283,8 +291,7 @@ def item(path,name):
             unchecked_contents = ItemModel.query.filter_by(path = f"{item.path}{item.itemname.split('~')[0]}-")
             contents = []
             for items in unchecked_contents:
-                #if PermissionHandler("r", items):
-                if True:
+                if PermissionHandler("r", items):
                     #owner_id = items.owner
                     #owner_name =  UserModel.query.filter_by(id = owner_id).first().name
                     #items.owner = owner_name
@@ -292,9 +299,11 @@ def item(path,name):
             return render_template('folder.html', contents = contents, current_folder = item, viewing=True)
         case 1:
             pass
-        
+
+#Return to parent folder      
 @app.route('/previous/<string:path>')
 #JINJA url_for('previous', path = current_folder.path)
+@login_required
 def previous(path):
     if path == '.-':
         return redirect(url_for('item', path = '.-', name = 'Mappe'))
@@ -306,6 +315,7 @@ def previous(path):
         print(previous_path)
     return redirect(url_for('item', path = previous_path, name = path_list[-2:-1]))
 
+#New Folder
 @app.route("/newfolder/<string:path>/<string:parent>", methods=['GET','POST'])
 #JINJA url_for('newfolder', path=current_folder.path, parent=current_folder.itemname)
 @login_required
@@ -326,7 +336,7 @@ def newfolder(path, parent):
         newfolder = ItemModel(
             owner = current_user.id,
             type = 0,
-            itemname = foldername,
+            itemname = foldername.strip("~-"),
             path = itempath,
             private = form.private.data,
             group_privs = group_priv_dict
@@ -335,9 +345,8 @@ def newfolder(path, parent):
         db.session.commit()
         flash('Folder created succesfully', 'success')
         return redirect(url_for('item', path=itempath, name=foldername))
-    flash(str(form.errors).strip('{}'), 'error')
     return render_template("newfolder.html", form=form)
-    
+
         
         
             
