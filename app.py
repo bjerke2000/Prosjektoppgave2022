@@ -50,7 +50,7 @@ class RegisterForm(FlaskForm):
     name = StringField(
         "Name",
         validators=[DataRequired(), Length(max=150)],
-        render_kw={"autofocus":True, "placeholder": "name"},
+        render_kw={"autofocus":True, "placeholder": "Name"},
     )
     email = StringField(
         "Email",
@@ -212,7 +212,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash('User has been logget out', 'success')
+    flash('User has been logged out', 'success')
     return (redirect(url_for('login')))
 
 
@@ -235,7 +235,6 @@ def register():
         else:
             flash('Email already exists', 'error')
             return render_template('register.html', form=form)
-    flash(str(form.errors).strip('{}'), 'error')
     return render_template("register.html", form=form)
             
 @app.route('/item/<string:path>/<string:name>')
