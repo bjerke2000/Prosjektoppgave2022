@@ -4,7 +4,7 @@ from flask import Flask, redirect, render_template, flash, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -98,11 +98,10 @@ class ItemModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     itemname = db.Column(db.String(250), nullable = False) #"filnavn(.filtype om fil)~uuid"
     owner = db.Column(db.Integer, db.ForeignKey('users.id')) #fk til users id
-    post_date = db.Column(db.Date)#date posted
-    edited_date = db.Column(db.Date())
+    post_date = db.Column(db.DateTime, nullable = False)#date posted
+    edited_date = db.Column(db.DateTime, nullable = False)
     type = db.Column(db.Boolean)#0 = mappe : 1 = fil
     path = db.Column(db.String(500), nullable = False) #"./mappe1/mappe2/mappe3/"
-    private = db.Column(db.Boolean)#0 = public  :  1 = Private
     group_privs = db.Column(db.PickleType)#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D 
     tags = db.Column(db.String(500))#py list with id of tags where [] are replaced with ',' ",0,1,60,89,"
 
@@ -112,7 +111,7 @@ class CommentsModel(db.Model):
     item_id = db.Column(db.Integer, db.ForeignKey('items.id'))#fk to Items id, that has the comment section.
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))#fk to users id, to know who made the comment
     comment = db.Column(db.String(150), nullable=False) #comment text
-    date = db.Column(db.Date)#date posted
+    date = db.Column(db.DateTime, nullable = False)#date posted
 
 class TagModel(db.Model):
     __tablename__ = 'tags'
@@ -126,10 +125,24 @@ class TagModel(db.Model):
 def PermissionHandler(required_priv, object):
     user_groups = current_user.groups.split(",")
     group_privs = object.group_privs
+    if isinstance(group_privs, NoneType):#Root folder always has nonetype rights
+        return True
     for group, priv in group_privs.items():
         if (str(group) in user_groups and required_priv in priv) or str(ADMINGROUP) in user_groups or object.owner == current_user.id:
             return True
     return False
+
+def PermissionCreator(form, group_priv_dict = {}):
+    for group in form.r_groups.data:
+        group_priv_dict[group] = "r"
+    for group in form.rw_groups.data:
+        group_priv_dict[group] = "rw"
+    match form.private.data:
+        case 0:
+            group_priv_dict[ALLUSERSGROUP] = 'r'
+        case 1:
+            group_priv_dict.pop(ALLUSERSGROUP)
+    return group_priv_dict
 
 def GetAvaliableName_helper(path, name):
     name_number = GetAvaliableName(path, name, 1) 
@@ -157,7 +170,7 @@ def index():
 def login():
     form = LoginForm()
     if current_user.is_authenticated:
-        return redirect(url_for('item', path = '.-', name = 'Mappe'))
+        return redirect(url_for('item', path = '', name = '.-'))
     if form.validate_on_submit():
         email = UserModel.query.filter_by(email = form.email.data).first()
         if email:
@@ -165,7 +178,7 @@ def login():
             if check_password_hash(email.password_hash, form.password.data):
                 login_user(email)
                 flash('Login was successfull', 'success')
-                return redirect(url_for('item', path = '.-', name = 'Mappe'))
+                return redirect(url_for('item', path = '', name = '.-'))
             else:
                 flash('Incorrect password','error')
         else:
@@ -232,8 +245,8 @@ def item(path,name):
 #JINJA url_for('previous', path = current_folder.path)
 @login_required
 def previous(path):
-    if path == '.-':
-        return redirect(url_for('item', path = '.-', name = 'Mappe'))
+    if path == '':
+        return redirect(url_for('item', path = '', name = '.-'))
     print(path)
     path_list = path.split("-")
     previous_path = ""
@@ -257,18 +270,15 @@ def newfolder(path, parent):
             foldername = form.itemname.data
         else:
             foldername = GetAvaliableName_helper(itempath, form.itemname.data) #checks for itemname(n), until it finds an avaliable number
-        group_priv_dict = {}
-        for group in form.r_groups.data:
-            group_priv_dict[group] = "r"
-        for group in form.rw_groups.data:
-            group_priv_dict[group] = "rw"
+        group_priv_dict = PermissionCreator(form)
         newfolder = ItemModel(
             owner = current_user.id,
             type = 0,
             itemname = foldername.strip("~-"),
             path = itempath,
-            private = form.private.data,
-            group_privs = group_priv_dict
+            group_privs = group_priv_dict,
+            post_date = datetime.now(),
+            edited_date = datetime.now()
         )
         db.session.add(newfolder)
         db.session.commit()

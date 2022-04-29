@@ -1,9 +1,10 @@
-from app import ADMINGROUP, ALLUSERSGROUP, TESTGROUP
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FileField, DateField, SelectMultipleField, SelectField
 from wtforms.validators import DataRequired, EqualTo, Length, Email
 
-
+ADMINGROUP=2
+ALLUSERSGROUP=3
+TESTGROUP=1
 
 class RegisterForm(FlaskForm):
     name = StringField(
@@ -72,12 +73,12 @@ class FolderForm(FlaskForm):
     )
     r_groups = SelectMultipleField(
         "Groups with read Privilages",
-        choices=[(ALLUSERSGROUP,"All Users"), (TESTGROUP,"Test Group")],
+        choices=[(TESTGROUP,"Test Group")],
         coerce=int
     )
     rw_groups = SelectMultipleField(
         "Groups with read and write Privilages",
-        choices=[(ALLUSERSGROUP,"All Users"), (TESTGROUP,"Test Group")],
+        choices=[(TESTGROUP,"Test Group")],
         coerce=int
     )
     submit = SubmitField("Create")
