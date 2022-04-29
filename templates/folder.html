@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+{% block title %}Files{% endblock %}
+{% block body %}
+
+<div class="container">
+    <div class="card-grid">
+        {% for item in contents %}
+        <div class="card">
+            {% if item.private == 1 %}
+                <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/logo.png" alt="MyFiles"></a>
+            {% elif item.private == 0%}
+                <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/folder.png" alt="MyFiles"></a>
+            {% endif %}
+            <div class="container">
+                <p>{{item.itemname.split("_")[0]}}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
