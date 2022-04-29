@@ -1,16 +1,11 @@
-from email.policy import default
-from importlib.resources import path
-from pickle import load, dump
-from pydoc import pathdirs
-from tokenize import String
+from forms import *
 from types import NoneType
-from unicodedata import name
-from wsgiref.validate import validator
-from click import confirm
 from flask import Flask, redirect, render_template, flash, url_for, session
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, FileField, DateField, SelectMultipleField, SelectField
-from wtforms.validators import DataRequired, EqualTo, Length, Email
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
+from datetime import date, timedelta
+from flask_wtf.file import FileField, FileAllowed, FileRequired
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
@@ -48,92 +43,6 @@ def load_user(user_id):
 def before_request():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(minutes=300)
-
-#===========================FORMS=======================================
-
-class RegisterForm(FlaskForm):
-    name = StringField(
-        "Name",
-        validators=[DataRequired(), Length(max=150)],
-        render_kw={"autofocus":True, "placeholder": "name"},
-    )
-    email = StringField(
-        "Email",
-        validators=[DataRequired(), Length(max=150), Email()],
-        render_kw={"placeholder":"Email"},
-    )
-    password = PasswordField(
-        "Password",
-        validators=[DataRequired(), EqualTo("password_confirm", "Passwords do not match")],
-        render_kw={"placeholder":"Password"}
-    )
-    password_confirm = PasswordField(
-        "Confirm password",
-        validators=[DataRequired()],
-        render_kw={"placeholder":"Confirm password"}
-    )
-    groups = SelectMultipleField(
-        "Select Field",
-        choices= [(ADMINGROUP,'Admin'),(TESTGROUP,'Test Group')],
-        coerce=int
-    )
-    submit = SubmitField("Register")
-
-class LoginForm(FlaskForm):
-    email = StringField(
-        "Email",
-        validators=[DataRequired()],
-        render_kw={'autofocus' : True, 'placeholder': "Email:"}
-    )
-    password = PasswordField(
-        "Password",
-        validators=[DataRequired()],
-        render_kw={ "placeholder": "Password"},
-    )
-    submit = SubmitField("Login")
-
-class GroupForm(FlaskForm):
-    group = StringField(
-        "Group Name",
-        validators=[DataRequired()],
-        render_kw={'autofocus' : True, 'placeholder': "Email:"}
-        )
-    members = SelectMultipleField(
-        "Members",
-        choices=[('1', 'root'), ('2', 'Bjerke')],
-        coerce=int
-    )
-
-class FolderForm(FlaskForm):
-    itemname = StringField(
-        "ItemName",
-        validators=[DataRequired(), Length(max=50)],
-        render_kw={'autofocus' : True, 'placeholder': "Item name"}
-    )
-    private = SelectField(
-        "Private",
-        choices=[(0,"Public"),(1,"Private")],
-        default=(0,"Public"),
-        coerce=int
-    )
-    r_groups = SelectMultipleField(
-        "Groups with read Privilages",
-        choices=[(ALLUSERSGROUP,"All Users"), (TESTGROUP,"Test Group")],
-        coerce=int
-    )
-    rw_groups = SelectMultipleField(
-        "Groups with read and write Privilages",
-        choices=[(ALLUSERSGROUP,"All Users"), (TESTGROUP,"Test Group")],
-        coerce=int
-    )
-    submit = SubmitField("Create")
-
-class FileForm(FlaskForm):
-    pass
-
-class EditFileForm(FlaskForm):
-    pass
-
 
 db = SQLAlchemy(app)
 
@@ -187,12 +96,30 @@ class GroupModel(db.Model):
 class ItemModel(db.Model):
     __tablename__ = 'items'
     id = db.Column(db.Integer, primary_key=True)
-    owner = db.Column(db.Integer, db.ForeignKey('users.id')) #fk til users id
-    type = db.Column(db.Boolean)#0 = mappe : 1 = fil
     itemname = db.Column(db.String(250), nullable = False) #"filnavn(.filtype om fil)~uuid"
+    owner = db.Column(db.Integer, db.ForeignKey('users.id')) #fk til users id
+    post_date = db.Column(db.Date)#date posted
+    edited_date = db.Column(db.Date())
+    type = db.Column(db.Boolean)#0 = mappe : 1 = fil
     path = db.Column(db.String(500), nullable = False) #"./mappe1/mappe2/mappe3/"
     private = db.Column(db.Boolean)#0 = public  :  1 = Private
-    group_privs = db.Column(db.PickleType)#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D ඞ
+    group_privs = db.Column(db.PickleType)#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D 
+    tags = db.Column(db.String(500))#py list with id of tags where [] are replaced with ',' ",0,1,60,89,"
+
+class CommentsModel(db.Model):
+    __tablename__ = 'comments'
+    id = db.Column(db.Integer, primary_key = True)
+    item_id = db.Column(db.Integer, db.ForeignKey('items.id'))#fk to Items id, that has the comment section.
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))#fk to users id, to know who made the comment
+    comment = db.Column(db.String(150), nullable=False) #comment text
+    date = db.Column(db.Date)#date posted
+
+class TagModel(db.Model):
+    __tablename__ = 'tags'
+    id = db.Column(db.Integer, primary_key=True)
+    tag = db.Column(db.String(50), nullable=False)#name of tag f.ex: Documentation
+
+
 
 #===========================FUNCTIONS===================================
 
@@ -316,6 +243,8 @@ def previous(path):
     return redirect(url_for('item', path = previous_path, name = path_list[-2:-1]))
 
 #New Folder
+
+
 @app.route("/newfolder/<string:path>/<string:parent>", methods=['GET','POST'])
 #JINJA url_for('newfolder', path=current_folder.path, parent=current_folder.itemname)
 @login_required
@@ -346,15 +275,6 @@ def newfolder(path, parent):
         flash('Folder created succesfully', 'success')
         return redirect(url_for('item', path=itempath, name=foldername))
     return render_template("newfolder.html", form=form)
-
-        
-        
-            
-
-
-
-
-
 
 #På bunnj
 if __name__ == "__main__":

@@ -1,4 +1,3 @@
-from app import *
 from forms import *
 from types import NoneType
 from flask import Flask, redirect, render_template, flash, url_for, session
@@ -133,7 +132,6 @@ def newfolder(path, parent):
             path = itempath,
             private = form.private.data,
             group_privs = group_priv_dict
-            post_date = date
         )
         db.session.add(newfolder)
         db.session.commit()
