@@ -3,8 +3,8 @@ from wtforms import StringField, PasswordField, SubmitField, FileField, DateFiel
 from wtforms.validators import DataRequired, EqualTo, Length, Email
 
 ADMINGROUP=2
-ALLUSERSGROUP=3
-TESTGROUP=1
+ALLUSERSGROUP=1
+TESTGROUP=3
 
 class RegisterForm(FlaskForm):
     name = StringField(
