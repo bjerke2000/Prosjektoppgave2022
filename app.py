@@ -255,8 +255,6 @@ def previous(path):
     return redirect(url_for('item', path = previous_path, name = path_list[-2:-1]))
 
 #New Folder
-
-
 @app.route("/newfolder/<string:path>/<string:parent>", methods=['GET','POST'])
 #JINJA url_for('newfolder', path=current_folder.path, parent=current_folder.itemname)
 @login_required
@@ -285,6 +283,34 @@ def newfolder(path, parent):
         flash('Folder created succesfully', 'success')
         return redirect(url_for('item', path=itempath, name=foldername))
     return render_template("newfolder.html", form=form)
+
+@app.route("/addfile/<string:path>/<string:parent>")
+def addfile(path, parent):
+    form = FileForm()
+    if form.validate_on_submit():
+        parent = parent.strip('-')
+        itempath = path + parent +"-"
+        item = ItemModel.query.filter_by(path = itempath, itemname = form.itemname.data).first()
+        if item is None:
+            foldername = form.itemname.data
+        else:
+            foldername = GetAvaliableName_helper(itempath, form.itemname.data) #checks for itemname(n), until it finds an avaliable number
+        group_priv_dict = PermissionCreator(form)
+        newfolder = ItemModel(
+            owner = current_user.id,
+            type = 0,
+            itemname = foldername.strip("~-"),
+            path = itempath,
+            group_privs = group_priv_dict,
+            post_date = datetime.now(),
+            edited_date = datetime.now()
+        )
+        db.session.add(newfolder)
+        db.session.commit()
+        flash('Folder created succesfully', 'success')
+        return redirect(url_for('item', path=itempath, name=foldername))
+    return render_template("newfolder.html", form=form)
+
 
 #På bunnj
 if __name__ == "__main__":

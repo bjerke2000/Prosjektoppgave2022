@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FileField, DateField, SelectMultipleField, SelectField
 from wtforms.validators import DataRequired, EqualTo, Length, Email
+from flask_wtf.file import FileField, FileAllowed, FileRequired
 
 ADMINGROUP=2
 ALLUSERSGROUP=1
@@ -84,7 +85,24 @@ class FolderForm(FlaskForm):
     submit = SubmitField("Create")
 
 class FileForm(FlaskForm):
-    pass
+    file = FileField('File', validators=[FileRequired(),FileAllowed(['txt','jpg','png','jpeg','mp4','webm'],'Non supported type')])
+    private = SelectField(
+        "Private",
+        choices=[(0,"Public"),(1,"Private")],
+        default=(0,"Public"),
+        coerce=int
+    )
+    r_groups = SelectMultipleField(
+        "Groups with read Privilages",
+        choices=[(TESTGROUP,"Test Group")],
+        coerce=int
+    )
+    rw_groups = SelectMultipleField(
+        "Groups with read and write Privilages",
+        choices=[(TESTGROUP,"Test Group")],
+        coerce=int
+    )
+    sumbit = SubmitField('Upload')
 
 class EditFileForm(FlaskForm):
     pass
