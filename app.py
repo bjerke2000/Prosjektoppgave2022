@@ -139,8 +139,6 @@ class TagModel(db.Model):
 def PermissionHandler(required_priv, object):
     user_groups = current_user.groups.split(",")
     group_privs = object.group_privs
-    if isinstance(group_privs, NoneType):  # Root folder always has nonetype rights
-        return True
     for group, priv in group_privs.items():
         if (str(group) in user_groups and required_priv in priv) or str(ADMINGROUP) in user_groups or object.owner == current_user.id:
             return True
@@ -296,17 +294,16 @@ def newfolder(path, parent):
         if item is None:
             foldername = form.itemname.data
         else:
-            # checks for itemname(n), until it finds an avaliable number
-            foldername = GetAvaliableName_helper(itempath, form.itemname.data)
+            foldername = GetAvaliableName_helper(itempath, form.itemname.data) #checks for itemname(n), until it finds an avaliable number
         group_priv_dict = PermissionCreator(form)
         newfolder = ItemModel(
-            owner=current_user.id,
-            type=0,
-            itemname=foldername.strip("~-"),
-            path=itempath,
-            group_privs=group_priv_dict,
-            post_date=datetime.now(),
-            edited_date=datetime.now()
+            owner = current_user.id,
+            type = 0,
+            itemname = foldername.strip("~-"),
+            path = itempath,
+            group_privs = group_priv_dict,
+            post_date = datetime.now(),
+            edited_date = datetime.now()
         )
         db.session.add(newfolder)
         db.session.commit()
