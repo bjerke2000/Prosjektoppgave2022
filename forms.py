@@ -85,13 +85,15 @@ class FolderForm(FlaskForm):
     submit = SubmitField("Create")
 
 class FileForm(FlaskForm):
-    file = FileField('File', validators=[FileRequired(),FileAllowed(['txt','jpg','png','jpeg','mp4','webm'],'Non supported type')])
-    private = SelectField(
-        "Private",
-        choices=[(0,"Public"),(1,"Private")],
-        default=(0,"Public"),
-        coerce=int
-    )
+    file = FileField(
+        'File', 
+        validators=[FileRequired(), FileAllowed(['txt','jpg','png','jpeg','mp4','webm'],'Non supported type')]
+        )
+    tags = StringField(
+        'Tags', 
+        validators=[Length(max=50)], 
+        render_kw={'placeholder':'Tags seperated by comma'}
+        )
     r_groups = SelectMultipleField(
         "Groups with read Privilages",
         choices=[(TESTGROUP,"Test Group")],
@@ -102,7 +104,13 @@ class FileForm(FlaskForm):
         choices=[(TESTGROUP,"Test Group")],
         coerce=int
     )
-    sumbit = SubmitField('Upload')
+    private = SelectField(
+        "Private",
+        choices=[(0,"Public"),(1,"Private")],
+        default=(0,"Public"),
+        coerce=int
+    )
+    submit = SubmitField('Upload')
 
 class EditFileForm(FlaskForm):
     pass

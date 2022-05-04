@@ -1,19 +1,17 @@
-from forms import *
-from types import NoneType
-from flask import Flask, redirect, render_template, flash, url_for, session
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from datetime import date, datetime, timedelta
-from flask_wtf.file import FileField, FileAllowed, FileRequired
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from datetime import date, timedelta
-from werkzeug.utils import secure_filename
-import uuid as uuid
 import os
-from flask_wtf.file import FileField, FileAllowed, FileRequired
+import uuid as uuid
+from datetime import date, datetime, timedelta
+from types import NoneType
+
+from flask import Flask, flash, redirect, render_template, session, url_for
+from flask_login import (LoginManager, UserMixin, current_user, login_required,
+                         login_user, logout_user)
+from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.file import FileAllowed, FileField, FileRequired
+from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
+
+from forms import *
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "esketit"
@@ -102,19 +100,15 @@ class GroupModel(db.Model):
 class ItemModel(db.Model):
     __tablename__ = 'items'
     id = db.Column(db.Integer, primary_key=True)
-    # "filnavn(.filtype om fil)~uuid"
-    itemname = db.Column(db.String(250), nullable=False)
-    owner = db.Column(db.Integer, db.ForeignKey('users.id'))  # fk til users id
-    post_date = db.Column(db.DateTime, nullable=False)  # date posted
-    edited_date = db.Column(db.DateTime, nullable=False)
-    type = db.Column(db.Boolean)  # 0 = mappe : 1 = fil
-    # "./mappe1/mappe2/mappe3/"
-    path = db.Column(db.String(500), nullable=False)
-    # lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D
-    group_privs = db.Column(db.PickleType)
-    # py list with id of tags where [] are replaced with ',' ",0,1,60,89,"
-    tags = db.Column(db.String(500))
-
+    itemname = db.Column(db.String(250), nullable = False) #"filnavn(.filtype om fil)~uuid"
+    owner = db.Column(db.Integer, db.ForeignKey('users.id')) #fk til users id
+    post_date = db.Column(db.DateTime, nullable = False)#date posted
+    edited_date = db.Column(db.DateTime, nullable = False)
+    type = db.Column(db.Boolean)#0 = mappe : 1 = fil
+    path = db.Column(db.String(500), nullable = False) #"./mappe1/mappe2/mappe3/"
+    group_privs = db.Column(db.PickleType)#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D 
+    tags = db.Column(db.String(500))#py list with id of tags where [] are replaced with ',' ",0,1,60,89,"
+    private = 0
 
 class CommentsModel(db.Model):
     __tablename__ = 'comments'
@@ -174,6 +168,26 @@ def GetAvaliableName(path, name, iteration):
         iteration += 1
         return GetAvaliableName(path, name, iteration)
 
+def TagManager(tags):
+    tags = tags.split(',')
+    cleaned_tags = []
+    final_tag_str = ','
+    for tag in tags:
+        temptag=''
+        cleaned_tags.append(temptag.join(letter for letter in tag if letter.isalnum()).lower()) #Remove all special charactes and set them to lower case
+    current_tags = TagModel.query.all()#Get all tags
+    for tag in current_tags:
+        if tag.tag in cleaned_tags: #Check if tag already exists
+            final_tag_str = final_tag_str + f'{tag.id},'
+            cleaned_tags.remove(tag.tag)
+    for tag in cleaned_tags:#add tag if it does not exist
+        newtag = TagModel(tag = tag)
+        db.session.add(newtag)
+    db.session.commit()
+    newtags = TagModel.query.filter(TagModel.tag.in_(cleaned_tags)).all()#get new tag objects
+    for tag in newtags:
+        final_tag_str = final_tag_str + f'{tag.id},' #ad new tag's id's to str
+    return final_tag_str
 
 # ===========================ROUTES======================================
 
@@ -256,9 +270,10 @@ def item(path, name):
             contents = []
             for items in unchecked_contents:
                 if PermissionHandler("r", items):
-                    #owner_id = items.owner
-                    #owner_name =  UserModel.query.filter_by(id = owner_id).first().name
-                    #items.owner = owner_name
+                    if ALLUSERSGROUP in items.group_privs:
+                        items.private = 0
+                    else:
+                        items.private = 1
                     contents.append(items)
             return render_template('folder.html', contents=contents, current_folder=item, viewing=True)
         case 1:
@@ -311,32 +326,39 @@ def newfolder(path, parent):
         return redirect(url_for('item', path=itempath, name=foldername))
     return render_template("newfolder.html", form=form)
 
-@app.route("/addfile/<string:path>/<string:parent>")
+@app.route("/addfile/<string:path>/<string:parent>", methods=['GET','POST'])
 def addfile(path, parent):
     form = FileForm()
     if form.validate_on_submit():
         parent = parent.strip('-')
         itempath = path + parent +"-"
-        item = ItemModel.query.filter_by(path = itempath, itemname = form.itemname.data).first()
-        if item is None:
-            foldername = form.itemname.data
-        else:
-            foldername = GetAvaliableName_helper(itempath, form.itemname.data) #checks for itemname(n), until it finds an avaliable number
+        #Denne biten trengs vel ikke, da vi har uuid for fila
+        #item = ItemModel.query.filter_by(path = itempath, itemname = form.file.data.filename).first() + æ fikk ikke dette til å funger som æ hadde lyst. ville gjør en like på itemname=
+        #if item is None:
+        #    itemname = secure_filename(form.file.data.filename)      
+        #else:
+        #    itemname = GetAvaliableName_helper(itempath, form.file.data.filename) #checks for itemname(n), until it finds an avaliable number
+        tags = TagManager(form.tags.data)
+        itemname = secure_filename(form.file.data.filename)
+        itemname_uuid = itemname.strip('-') + '~' + str(uuid.uuid1())
+        form.file.data.save(os.path.join(app.config['UPLOAD_FOLDER'], itemname_uuid))
         group_priv_dict = PermissionCreator(form)
-        newfolder = ItemModel(
+        newitem = ItemModel(
             owner = current_user.id,
-            type = 0,
-            itemname = foldername.strip("~-"),
+            type = 1,
+            itemname = itemname_uuid,
             path = itempath,
             group_privs = group_priv_dict,
             post_date = datetime.now(),
-            edited_date = datetime.now()
+            edited_date = datetime.now(),
+            tags = tags
         )
-        db.session.add(newfolder)
+        db.session.add(newitem)
         db.session.commit()
-        flash('Folder created succesfully', 'success')
-        return redirect(url_for('item', path=itempath, name=foldername))
-    return render_template("newfolder.html", form=form)
+        flash('Item created succesfully', 'success')
+        return redirect(url_for('item', path=itempath, name=itemname))
+    flash(form.errors)
+    return render_template("additem.html", form=form)
 
 
 #På bunnj
