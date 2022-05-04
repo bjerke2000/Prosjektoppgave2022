@@ -1,15 +1,17 @@
-from forms import *
-from types import NoneType
-from flask import Flask, redirect, render_template, flash, url_for, session
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from datetime import date, datetime, timedelta
-from flask_wtf.file import FileField, FileAllowed, FileRequired
-from werkzeug.utils import secure_filename
-import uuid as uuid
 import os
-from flask_wtf.file import FileField, FileAllowed, FileRequired
+import uuid as uuid
+from datetime import date, datetime, timedelta
+from types import NoneType
+
+from flask import Flask, flash, redirect, render_template, session, url_for
+from flask_login import (LoginManager, UserMixin, current_user, login_required,
+                         login_user, logout_user)
+from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.file import FileAllowed, FileField, FileRequired
+from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
+
+from forms import *
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "esketit"
@@ -100,6 +102,7 @@ class ItemModel(db.Model):
     path = db.Column(db.String(500), nullable = False) #"./mappe1/mappe2/mappe3/"
     group_privs = db.Column(db.PickleType)#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D 
     tags = db.Column(db.String(500))#py list with id of tags where [] are replaced with ',' ",0,1,60,89,"
+    private = 0
 
 class CommentsModel(db.Model):
     __tablename__ = 'comments'
@@ -163,12 +166,12 @@ def TagManager(tags):
     for tag in current_tags:
         if tag.tag in cleaned_tags: #Check if tag already exists
             final_tag_str = final_tag_str + f'{tag.id},'
-            cleaned_tags.remove(cleaned_tags.index(tag.tag))
+            cleaned_tags.remove(tag.tag)
     for tag in cleaned_tags:#add tag if it does not exist
         newtag = TagModel(tag = tag)
         db.session.add(newtag)
     db.session.commit()
-    newtags = TagModel.query.filer(TagModel.tag.in_(cleaned_tags)).all()#get new tag objects
+    newtags = TagModel.query.filter(TagModel.tag.in_(cleaned_tags)).all()#get new tag objects
     for tag in newtags:
         final_tag_str = final_tag_str + f'{tag.id},' #ad new tag's id's to str
     return final_tag_str
@@ -247,9 +250,10 @@ def item(path,name):
             contents = []
             for items in unchecked_contents:
                 if PermissionHandler("r", items):
-                    #owner_id = items.owner
-                    #owner_name =  UserModel.query.filter_by(id = owner_id).first().name
-                    #items.owner = owner_name
+                    if ALLUSERSGROUP in items.group_privs:
+                        items.private = 0
+                    else:
+                        items.private = 1
                     contents.append(items)
             return render_template('folder.html', contents = contents, current_folder = item, viewing=True)
         case 1:
@@ -314,7 +318,7 @@ def addfile(path, parent):
         #    itemname = GetAvaliableName_helper(itempath, form.file.data.filename) #checks for itemname(n), until it finds an avaliable number
         tags = TagManager(form.tags.data)
         itemname = secure_filename(form.file.data.filename)
-        itemname_uuid = str(uuid.uuid1()) + '_' + itemname.strip('-')
+        itemname_uuid = itemname.strip('-') + '~' + str(uuid.uuid1())
         form.file.data.save(os.path.join(app.config['UPLOAD_FOLDER'], itemname_uuid))
         group_priv_dict = PermissionCreator(form)
         newitem = ItemModel(
