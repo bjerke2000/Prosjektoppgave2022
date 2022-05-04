@@ -17,7 +17,7 @@
             </div>
         {% endfor %}
             <div class="card">
-                <a href=""><img src="/static/images/meth kattt.jpg" alt="New item"></a>
+                <a href="{{url_for('addfile', path=current_folder.path, parent=current_folder.itemname)}}"><img src="/static/images/meth kattt.jpg" alt="New item"></a>
                 <div class="container">
                 <p>New File</p>
                 </div>
