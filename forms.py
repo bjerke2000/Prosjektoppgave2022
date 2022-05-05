@@ -121,3 +121,10 @@ class FileForm(FlaskForm):
 
 class EditFileForm(FlaskForm):
     pass
+
+class CommentForm(FlaskForm):
+    comment = StringField('Comment',
+    validators=[DataRequired(), Length(max=150)],
+    render_kw={'placeholder':'Comment'}
+    )
+    submit = SubmitField('Post')

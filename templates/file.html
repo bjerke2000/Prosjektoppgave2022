@@ -6,13 +6,20 @@
 {% elif fileinfo[0] == 'picture' %}
     <img src="/static/content/{{item.itemname}}" alt="{{item.itemname}}">
 {% elif fileinfo[0] == 'video' %}
-    <video width="1920" height="1080" controls>
+    <video width="1280" height="720" controls>
         <source src="/static/content/{{item.itemname}}" type="video/{{item.itemname.split('~')[1].split('.')[-1]}}">
         Your browser does not support the video tag.
     </video>
 {% endif %}
 
 <h4>Comments</h4>
+<form method="POST">
+    {{commentform.csrf_token}}
+    {{commentform.comment}}
+    {{commentform.submit}}
+
+
+</form>
 {% for comment in comments %}
     <div class="comment">
         
@@ -20,5 +27,8 @@
             {{comment.comment}}
         </p>
         {{comment.date}}
+        {% if current_user.id == comment.user_id %}
+        <a href="#">Delete</a>
+        {% endif %}
     </div>
 {% endfor %}
