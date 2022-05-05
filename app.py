@@ -19,7 +19,7 @@ app.config[
     "SQLALCHEMY_DATABASE_URI"
 ] = "mysql+pymysql://stud_v22_didriksenchr:R275uX1WYcttAKhb@kark.uit.no/stud_v22_didriksenchr"
 
-UPLOAD_FOLDER = 'content'
+UPLOAD_FOLDER = 'static/content'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ADMINGROUP=2
 ALLUSERSGROUP=1
@@ -103,6 +103,7 @@ class ItemModel(db.Model):
     group_privs = db.Column(db.PickleType)#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D 
     tags = db.Column(db.String(500))#py list with id of tags where [] are replaced with ',' ",0,1,60,89,"
     private = 0
+    editable = 0
 
 class CommentsModel(db.Model):
     __tablename__ = 'comments'
@@ -111,6 +112,7 @@ class CommentsModel(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))#fk to users id, to know who made the comment
     comment = db.Column(db.String(150), nullable=False) #comment text
     date = db.Column(db.DateTime, nullable = False)#date posted
+    username = ''
 
 class TagModel(db.Model):
     __tablename__ = 'tags'
@@ -124,8 +126,10 @@ class TagModel(db.Model):
 def PermissionHandler(required_priv, object):
     user_groups = current_user.groups.split(",")
     group_privs = object.group_privs
+    if object.owner == current_user.id:
+        return True
     for group, priv in group_privs.items():
-        if (str(group) in user_groups and required_priv in priv) or str(ADMINGROUP) in user_groups or object.owner == current_user.id:
+        if (str(group) in user_groups and required_priv in priv) or str(ADMINGROUP) in user_groups:
             return True
     return False
 
@@ -257,7 +261,28 @@ def item(path,name):
                     contents.append(items)
             return render_template('folder.html', contents = contents, current_folder = item, viewing=True)
         case 1:
-            pass
+            text_types = ['txt']
+            picture_types=['jpg','png','jpeg','gif']
+            video_types=['mp4','webm']
+            type = item.itemname.split('~')[1].split('.')[-1]
+            if type in text_types:
+                    filetype = 'text'
+                    with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'r', encoding='utf-8') as f:
+                        lines = f.readlines()
+                    fileinfo=[filetype,lines]
+            elif type in picture_types:
+                    filetype = 'picture'
+                    fileinfo=[filetype]
+            elif type in video_types:
+                    filetype='video'
+                    fileinfo=[filetype]
+            else: #if no match <---
+                    filetype = 'not_supported'
+                    fileinfo=[filetype]
+            comments = CommentsModel.query.filter_by(item_id = item.id)
+            for comment in comments:
+                comment.username = UserModel.query.filter_by(id = comment.user_id).first().name
+            return render_template('file.html', item = item, fileinfo = fileinfo, comments = comments)
 
 #Return to parent folder      
 @app.route('/previous/<string:path>')
@@ -310,15 +335,12 @@ def addfile(path, parent):
     if form.validate_on_submit():
         parent = parent.strip('-')
         itempath = path + parent +"-"
-        #Denne biten trengs vel ikke, da vi har uuid for fila
-        #item = ItemModel.query.filter_by(path = itempath, itemname = form.file.data.filename).first() + æ fikk ikke dette til å funger som æ hadde lyst. ville gjør en like på itemname=
-        #if item is None:
-        #    itemname = secure_filename(form.file.data.filename)      
-        #else:
-        #    itemname = GetAvaliableName_helper(itempath, form.file.data.filename) #checks for itemname(n), until it finds an avaliable number
         tags = TagManager(form.tags.data)
-        itemname = secure_filename(form.file.data.filename)
-        itemname_uuid = itemname.strip('-') + '~' + str(uuid.uuid1())
+        if form.name.data != '':
+            itemname = secure_filename(form.name.data + '.' + form.file.data.filename.split('.')[-1])
+        else:
+            itemname = secure_filename(form.file.data.filename)
+        itemname_uuid = str(uuid.uuid1()) + '~' + itemname.strip('-')
         form.file.data.save(os.path.join(app.config['UPLOAD_FOLDER'], itemname_uuid))
         group_priv_dict = PermissionCreator(form)
         newitem = ItemModel(

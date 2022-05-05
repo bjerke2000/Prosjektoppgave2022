@@ -8,6 +8,9 @@
         <form method="POST" enctype="multipart/form-data">
             {{ form.csrf_token() }}
             <div class="mb-3">
+                {{ form.name(class = "form-control") }}
+            </div>
+            <div class="mb-3">
                 {{ form.file(class = "form-control") }}
             </div>
             <div class="mb-3">
