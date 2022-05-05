@@ -241,7 +241,7 @@ def register():
     return render_template("register.html", form=form)
 
 #Display a file or folder
-@app.route('/item/<string:path>/<string:name>')
+@app.route('/item/<string:path>/<string:name>', methods=['GET','POST'])
 @login_required
 def item(path,name):
     item = ItemModel.query.filter_by(path = path, itemname = name).first()
@@ -277,12 +277,23 @@ def item(path,name):
                     filetype='video'
                     fileinfo=[filetype]
             else: #if no match <---
-                    filetype = 'not_supported'
-                    fileinfo=[filetype]
-            comments = CommentsModel.query.filter_by(item_id = item.id)
+                flash('Not able to open file')
+                return redirect(url_for('previous', path = path))
+            commentform = CommentForm()
+            if commentform.validate_on_submit():
+                newcomment = CommentsModel(
+                    item_id = item.id,
+                    user_id = current_user.id,
+                    comment = commentform.comment.data,
+                    date = datetime.now()
+                )
+                db.session.add(newcomment)
+                db.session.commit()
+                return redirect(url_for('item', path=path, name=name))
+            comments = CommentsModel.query.filter_by(item_id = item.id).all()
             for comment in comments:
                 comment.username = UserModel.query.filter_by(id = comment.user_id).first().name
-            return render_template('file.html', item = item, fileinfo = fileinfo, comments = comments)
+            return render_template('file.html', item = item, fileinfo = fileinfo, comments = comments, commentform = commentform)
 
 #Return to parent folder      
 @app.route('/previous/<string:path>')
@@ -360,6 +371,14 @@ def addfile(path, parent):
     flash(form.errors)
     return render_template("additem.html", form=form)
 
+app.route('/commentdelete/<int:id>')
+def commentdelete(id):
+    comment = CommentsModel.query.filter_by(id=id).first()
+    parentitem = ItemModel.query.filter_by(id=comment.item_id).first()
+    db.session.delete(comment)
+    db.session.commit()
+    return redirect(url_for('item', path=parentitem.path, name=parentitem.itemname))
+    
 
 #På bunnj
 if __name__ == "__main__":
