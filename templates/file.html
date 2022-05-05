@@ -1,0 +1,24 @@
+{{item.path}}{{ item.itemname.split('~')[1] }}   laget:{{item.post_date}}  oppdatert:{{item.edited_date}} <br>
+{% if fileinfo[0] == 'text' %}
+    {% for line in fileinfo[1] %}
+        <p>{{line}}</p>
+    {% endfor %}
+{% elif fileinfo[0] == 'picture' %}
+    <img src="/static/content/{{item.itemname}}" alt="{{item.itemname}}">
+{% elif fileinfo[0] == 'video' %}
+    <video width="1920" height="1080" controls>
+        <source src="/static/content/{{item.itemname}}" type="video/{{item.itemname.split('~')[1].split('.')[-1]}}">
+        Your browser does not support the video tag.
+    </video>
+{% endif %}
+
+<h4>Comments</h4>
+{% for comment in comments %}
+    <div class="comment">
+        
+        <p>{{ comment.username }}<br>
+            {{comment.comment}}
+        </p>
+        {{comment.date}}
+    </div>
+{% endfor %}

@@ -6,6 +6,9 @@ from flask_wtf.file import FileField, FileAllowed, FileRequired
 ADMINGROUP=2
 ALLUSERSGROUP=1
 TESTGROUP=3
+text_types = ['txt']
+picture_types=['jpg','png','jpeg','gif']
+video_types=['mp4','webm']
 
 class RegisterForm(FlaskForm):
     name = StringField(
@@ -85,9 +88,13 @@ class FolderForm(FlaskForm):
     submit = SubmitField("Create")
 
 class FileForm(FlaskForm):
+    name = StringField('Name',
+    render_kw={'placeholder':'Filename'}
+    )
     file = FileField(
         'File', 
-        validators=[FileRequired(), FileAllowed(['txt','jpg','png','jpeg','mp4','webm'],'Non supported type')]
+        validators=[FileRequired(), FileAllowed([*text_types,*picture_types,*video_types],'Non supported type')],
+        render_kw={'placeholder':'Add file'}
         )
     tags = StringField(
         'Tags', 
