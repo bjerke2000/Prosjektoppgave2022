@@ -371,8 +371,8 @@ def addfile(path, parent):
     flash(form.errors)
     return render_template("additem.html", form=form)
 
-app.route('/commentdelete/<int:id>')
-def commentdelete(id):
+@app.route('/delcomment/<int:id>', methods=['GET','POST'])
+def delcomment(id):
     comment = CommentsModel.query.filter_by(id=id).first()
     parentitem = ItemModel.query.filter_by(id=comment.item_id).first()
     db.session.delete(comment)

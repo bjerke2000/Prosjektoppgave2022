@@ -28,7 +28,7 @@
         </p>
         {{comment.date}}
         {% if current_user.id == comment.user_id %}
-        <a href="#">Delete</a>
+        <a href="{{url_for('delcomment', id=comment.id)}}">Delete</a>
         {% endif %}
     </div>
 {% endfor %}
