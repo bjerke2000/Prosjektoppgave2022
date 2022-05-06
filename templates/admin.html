@@ -15,7 +15,7 @@ Groups
 Items
 <ul>
     {% for item in items %}
-        <li>id:{{item.id}} ||||| itemname:{{item.itemname}} ||||| path:{{item.path}} ||||| ownerid:{{item.owner}} ||||| private:{{item.private}} ||||| group_privs:{{item.group_privs}} ||||| tags:{{item.tags}} ||||| postdate:{{item.post_date}} ||||| last_edited:{{item.edited_date}}</li>
+        <li>id:{{item.id}} ||||| <a href="{{url_for('item', path = item.path, name = item.itemname)}}">itemname:{{item.itemname}}</a> ||||| {{item.path}} ||||| ownerid:{{item.owner}} ||||| private:{{item.private}} ||||| group_privs:{{item.group_privs}} ||||| tags:{{item.tags}} ||||| postdate:{{item.post_date}} ||||| last_edited:{{item.edited_date}}</li>
     {% endfor %} 
 </ul>
 
