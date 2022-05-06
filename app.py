@@ -7,7 +7,6 @@ from flask import Flask, flash, redirect, render_template, session, url_for
 from flask_login import (LoginManager, UserMixin, current_user, login_required,
                          login_user, logout_user)
 from flask_sqlalchemy import SQLAlchemy
-from flask_wtf.file import FileAllowed, FileField, FileRequired
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
@@ -118,7 +117,6 @@ class TagModel(db.Model):
     __tablename__ = 'tags'
     id = db.Column(db.Integer, primary_key=True)
     tag = db.Column(db.String(50), nullable=False)#name of tag f.ex: Documentation
-
 
 
 #===========================FUNCTIONS===================================
@@ -240,6 +238,26 @@ def register():
     flash(str(form.errors).strip('{}'), 'error')
     return render_template("register.html", form=form)
 
+@app.route('/admin', methods=['GET','POST'])
+@login_required
+def admin():
+    if str(ADMINGROUP) in current_user.groups.split(','):
+        Users = UserModel.query.all()
+        Groups = GroupModel.query.all()
+        Items = ItemModel.query.all()
+        for item in Items:
+            if ALLUSERSGROUP in item.group_privs:
+                item.private = 0
+            else:
+                item.private = 1
+        Comments = CommentsModel.query.all()
+        for comment in Comments:
+            comment.username = UserModel.query.filter_by(id = comment.user_id).first().name
+        Tags = TagModel.query.all()
+        return render_template('admin.html', users = Users, groups = Groups, items = Items, comments = Comments, tags = Tags)
+    return redirect(url_for('index'))
+
+
 #Display a file or folder
 @app.route('/item/<string:path>/<string:name>', methods=['GET','POST'])
 @login_required
@@ -312,7 +330,7 @@ def previous(path):
 
 #New Folder
 @app.route("/newfolder/<string:path>/<string:parent>", methods=['GET','POST'])
-#JINJA url_for('newfolder', path=current_folder.path, parent=current_folder.itemname)
+#JINJA url_for('newfolder', path=current_folder.path, parent=current_folder.itemname)*
 @login_required
 def newfolder(path, parent):
     form = FolderForm()
@@ -379,6 +397,7 @@ def delcomment(id):
     db.session.commit()
     return redirect(url_for('item', path=parentitem.path, name=parentitem.itemname))
     
+
 
 #På bunnj
 if __name__ == "__main__":
