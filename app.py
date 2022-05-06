@@ -2,7 +2,7 @@ import os
 import uuid as uuid
 from datetime import date, datetime, timedelta
 from types import NoneType
-
+from sqlalchemy import update
 from flask import Flask, flash, redirect, render_template, session, url_for
 from flask_login import (LoginManager, UserMixin, current_user, login_required,
                          login_user, logout_user)
@@ -23,6 +23,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ADMINGROUP=2
 ALLUSERSGROUP=1
 TESTGROUP=3
+DELETED_USER=8
 
 
 # Login
@@ -103,6 +104,7 @@ class ItemModel(db.Model):
     tags = db.Column(db.String(500))#py list with id of tags where [] are replaced with ',' ",0,1,60,89,"
     private = 0
     editable = 0
+    ownername = ''
 
 class CommentsModel(db.Model):
     __tablename__ = 'comments'
@@ -178,6 +180,46 @@ def TagManager(tags):
         final_tag_str = final_tag_str + f'{tag.id},' #ad new tag's id's to str
     return final_tag_str
 
+def DeleteItem(id):
+    comments = CommentsModel.query.filter_by(item_id = id)
+    item = ItemModel.query.filter_by(id = id).first()
+    for comment in comments:
+        db.session.delete(comment)
+    db.session.delete(item)
+    db.session.commit()
+
+def DeleteUser(id):
+    comments = CommentsModel.query.filter_by(user_id = id)
+    items = ItemModel.query.filter_by(owner = id)
+    for comment in comments:
+        comment.user_id = DELETED_USER
+    for item in items:
+        item.owner = DELETED_USER
+    db.session.commit()
+    user = UserModel.query.filter_by(id = id).first()
+    db.session.delete(user)
+    db.session.commit()
+
+def DeleteComment(id):
+    comment = CommentsModel.query.filter_by(id=id).first()
+    parentitem = ItemModel.query.filter_by(id=comment.item_id).first()
+    db.session.delete(comment)
+    db.session.commit()
+    return parentitem.path, parentitem.itemname
+
+def DeleteTag(id):
+    items = ItemModel.query.filter_by(type = 1)
+    for item in items:
+        if ','+str(id)+',' in item.tags:
+            item.tags = item.tags.replace(','+str(id)+',',',')
+    tag = TagModel.query.filter_by(id = id).first()
+    db.session.delete(tag)
+    db.session.commit()
+
+def AdminTest():
+    if str(ADMINGROUP) in current_user.groups.split(','):
+        return True
+    return False
 #===========================ROUTES======================================
 
 #index redirects to login
@@ -277,12 +319,13 @@ def item(path,name):
                     else:
                         items.private = 1
                     contents.append(items)
-            return render_template('folder.html', contents = contents, current_folder = item, viewing=True)
-        case 1:
+            return render_template('folder.html', contents = contents, current_folder = item, viewing=True, folder=True, admin = AdminTest())
+        case 1: #Show contents if file
             text_types = ['txt']
             picture_types=['jpg','png','jpeg','gif']
             video_types=['mp4','webm']
-            type = item.itemname.split('~')[1].split('.')[-1]
+            type = item.itemname.split('~')[1].split('.')[-1] #Gets filetype
+            item.ownername = UserModel.query.filter_by(id = item.owner).first().name #gets username for displaying
             if type in text_types:
                     filetype = 'text'
                     with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'r', encoding='utf-8') as f:
@@ -311,14 +354,14 @@ def item(path,name):
             comments = CommentsModel.query.filter_by(item_id = item.id).all()
             for comment in comments:
                 comment.username = UserModel.query.filter_by(id = comment.user_id).first().name
-            return render_template('file.html', item = item, fileinfo = fileinfo, comments = comments, commentform = commentform)
+            return render_template('file.html', item = item, fileinfo = fileinfo, comments = comments, commentform = commentform, current_folder = item, viewing = True, admin = AdminTest())
 
-#Return to parent folder      
+#Return to parent folder
 @app.route('/previous/<string:path>')
 #JINJA url_for('previous', path = current_folder.path)
 @login_required
 def previous(path):
-    if path == 'root':
+    if path == 'root' or 'root-': #Catch exceptions when working close to root
         return redirect(url_for('item', path = 'root', name = '-'))
     print(path)
     path_list = path.split("-")
@@ -356,7 +399,7 @@ def newfolder(path, parent):
         db.session.commit()
         flash('Folder created succesfully', 'success')
         return redirect(url_for('item', path=itempath, name=foldername))
-    return render_template("newfolder.html", form=form)
+    return render_template("newfolder.html", form=form, admin = AdminTest())
 
 @app.route("/addfile/<string:path>/<string:parent>", methods=['GET','POST'])
 def addfile(path, parent):
@@ -388,15 +431,35 @@ def addfile(path, parent):
         flash('Item created succesfully', 'success')
         return redirect(url_for('item', path=itempath, name=itemname))
     flash(form.errors)
-    return render_template("additem.html", form=form)
+    return render_template("additem.html", form=form, admin = AdminTest())
 
 @app.route('/delcomment/<int:id>', methods=['GET','POST'])
 def delcomment(id):
-    comment = CommentsModel.query.filter_by(id=id).first()
-    parentitem = ItemModel.query.filter_by(id=comment.item_id).first()
-    db.session.delete(comment)
-    db.session.commit()
-    return redirect(url_for('item', path=parentitem.path, name=parentitem.itemname))
+    deletion = DeleteComment(id)
+    return redirect(url_for('item', path=deletion[0], name=deletion[1]))
+
+@app.route('/admin_delete/<string:table>/<int:id>')
+@login_required
+def admin_delete(table, id):
+    if AdminTest():
+        match table:
+            case 'users':
+                DeleteUser(id)
+                #flash(f'User succesfully deleted', 'success')
+            case 'items':
+                DeleteItem(id)
+                #flash(f'Item succesfully deleted', 'success')
+            case 'groups':
+                pass #dette blir grusomt å kod.
+            case 'tags':
+                DeleteTag(id)
+                #flash(f'Tag succesfully deleted', 'success')
+            case 'comments':
+                DeleteComment(id)
+                #flash(f'Comment succesfully deleted', 'success')
+        return redirect(url_for('admin'))
+    return redirect(url_for('index'))
+            
     
 
 
