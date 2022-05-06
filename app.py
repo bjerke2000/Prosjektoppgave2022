@@ -277,7 +277,7 @@ def item(path,name):
                     else:
                         items.private = 1
                     contents.append(items)
-            return render_template('folder.html', contents = contents, current_folder = item, viewing=True)
+            return render_template('folder.html', contents = contents, current_folder = item, viewing=True, folder = True)
         case 1:
             text_types = ['txt']
             picture_types=['jpg','png','jpeg','gif']
@@ -311,14 +311,13 @@ def item(path,name):
             comments = CommentsModel.query.filter_by(item_id = item.id).all()
             for comment in comments:
                 comment.username = UserModel.query.filter_by(id = comment.user_id).first().name
-            return render_template('file.html', item = item, fileinfo = fileinfo, comments = comments, commentform = commentform)
-
+            return render_template('file.html', item = item, fileinfo = fileinfo, comments = comments, commentform = commentform, current_folder = item, viewing=True)
 #Return to parent folder      
 @app.route('/previous/<string:path>')
 #JINJA url_for('previous', path = current_folder.path)
 @login_required
 def previous(path):
-    if path == 'root-':
+    if path == 'root':
         return redirect(url_for('item', path = 'root', name = '-'))
     print(path)
     path_list = path.split("-")

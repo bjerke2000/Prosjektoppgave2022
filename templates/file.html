@@ -1,34 +1,49 @@
-{{item.path}}{{ item.itemname.split('~')[1] }}   laget:{{item.post_date}}  oppdatert:{{item.edited_date}} <br>
-{% if fileinfo[0] == 'text' %}
-    {% for line in fileinfo[1] %}
+{% extends 'layout.html' %}
+{% block body %}
+<div class="master-content">
+    {% if fileinfo[0] == 'text' %}
+    <div class="textcontent">
+        {% for line in fileinfo[1] %}
         <p>{{line}}</p>
+    </div>
     {% endfor %}
-{% elif fileinfo[0] == 'picture' %}
-    <img src="/static/content/{{item.itemname}}" alt="{{item.itemname}}">
-{% elif fileinfo[0] == 'video' %}
-    <video width="1280" height="720" controls>
+    {% elif fileinfo[0] == 'picture' %}
+    <div class="mediacontent">
+        <img src="/static/content/{{item.itemname}}" alt="{{item.itemname}}">
+    </div>
+    {% elif fileinfo[0] == 'video' %}
+    <video class="videoplayer" controls>
         <source src="/static/content/{{item.itemname}}" type="video/{{item.itemname.split('~')[1].split('.')[-1]}}">
         Your browser does not support the video tag.
     </video>
+</div>
 {% endif %}
+</div>
+<div class="sidebar">
+    <p>Filename: {{item.path}}{{ item.itemname.split('~')[1] }} </p>
+    <p>Uploaded by: {#item.ownername#}</a>
+    <p>Created: {{item.post_date}}</p>
+    <p>Updated:{{item.edited_date}}</p>
+</div>
+</div>
+<div class="comments">
+    <h4>Comments</h4>
+    <form method="POST">
+        {{commentform.csrf_token}}
+        {{commentform.comment}}
+        {{commentform.submit(class = "btn")}}
 
-<h4>Comments</h4>
-<form method="POST">
-    {{commentform.csrf_token}}
-    {{commentform.comment}}
-    {{commentform.submit}}
-
-
+</div>
 </form>
 {% for comment in comments %}
-    <div class="comment">
-        
-        <p>{{ comment.username }}<br>
-            {{comment.comment}}
-        </p>
-        {{comment.date}}
-        {% if current_user.id == comment.user_id %}
-        <a href="{{url_for('delcomment', id=comment.id)}}">Delete</a>
-        {% endif %}
-    </div>
+<div class="comment">
+    <h5 class="commentuser">{{ comment.username }}</h5>
+    <p class="comment-text">{{comment.comment}}</p>
+    {{comment.date}}
+    {% if current_user.id == comment.user_id %}<br>
+    <a class="btn" href="{{url_for('delcomment', id=comment.id)}}">Delete</a>
+    {% endif %}
+</div>
+
 {% endfor %}
+{% endblock %}
