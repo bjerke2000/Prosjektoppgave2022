@@ -312,7 +312,7 @@ def admin():
         for comment in Comments:
             comment.username = UserModel.query.filter_by(id = comment.user_id).first().name
         Tags = TagModel.query.all()
-        return render_template('admin.html', users = Users, groups = Groups, items = Items, comments = Comments, tags = Tags)
+        return render_template('admin.html', users = Users, groups = Groups, items = Items, comments = Comments, tags = Tags, admin = AdminTest())
     return redirect(url_for('index'))
 
 
