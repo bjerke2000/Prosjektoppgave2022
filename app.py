@@ -318,7 +318,7 @@ def item(path,name):
 #JINJA url_for('previous', path = current_folder.path)
 @login_required
 def previous(path):
-    if path == 'root-':
+    if path == 'root':
         return redirect(url_for('item', path = 'root', name = '-'))
     print(path)
     path_list = path.split("-")
@@ -360,6 +360,7 @@ def newfolder(path, parent):
 
 @app.route("/addfile/<string:path>/<string:parent>", methods=['GET','POST'])
 def addfile(path, parent):
+    current_folder = ItemModel.query.filter_by(path = path, itemname = parent).first()
     form = FileForm()
     if form.validate_on_submit():
         parent = parent.strip('-')
