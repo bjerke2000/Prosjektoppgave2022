@@ -12,6 +12,7 @@
 </head>
 
 <body>
+    {% include 'includes/_navbar.html' %}
     {% for category, message in get_flashed_messages(with_categories=true) %}
     <div class="alert  {{category}}">
         <span class="closebtn" onclick="this.parentElement.remove()">&times;</span>

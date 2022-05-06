@@ -138,10 +138,8 @@ img {
     display: inline-block;
 }
 
-
-
 .btn:hover {
-    opacity: .9;
+    opacity: .8;
 }
 
 .btn-rounded {
@@ -155,10 +153,9 @@ img {
 }
 
 .container {
-    width: 200rem;
+    max-width: 70%;
     margin: auto;
     padding: 0 2rem;
-    margin-top: 5rem;
 }
 
 nav {
@@ -182,12 +179,6 @@ nav ul li:last-child {
 
 nav img {
     height: 90px;
-}
-
-
-#formlogo {
-    height: 7rem;
-    width: 6rem;
 }
 
 /* Showcase Styling */
@@ -325,18 +316,10 @@ nav img {
 
 .inputform {
     background-color: rgb(25, 25, 25);
-    max-width: 25rem;
+    max-width: 40%;
     padding: 2rem;
     margin: auto;
-    text-align: center;
-    border-radius: 25px;
-    margin-top: 7rem;
-    animation: fadeIn 0.7s ease-in both;
 
-}
-
-.inputform .btn {
-    max-width: 15rem;
 }
 
 /* Alert section */
@@ -397,7 +380,6 @@ nav img {
     padding-top: 40px;
 }
 
-
 .card p {
     font-size: 20px;
     text-align: center;
@@ -406,21 +388,6 @@ nav img {
 .card:hover {
     opacity: 70%;
 }
-
-
-/*cool animation things*/
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translate3d(0, -15%, 0);
-    }
-
-    to {
-        opacity: 1;
-        transform: translate3d(0, 0, 0);
-    }
-}
-
 
 @media (max-width: 600px) {
     .showcase-content h1 {
