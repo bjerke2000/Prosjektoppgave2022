@@ -8,6 +8,7 @@
         {% elif viewing %}
             <li><a class="btn" href="{{url_for('previous', path = current_folder.path)}}">Gå tilbake</a></li>
             <li><a href="{{url_for('logout')}}" class="btn">Logout</a></li>
+            <li><a href="{{url_for('newfolder', path = current_folder.path, parent=current_folder.itemname)}}" class = "btn">New Folder</a></li>
         {% else %}
             <li><a href="{{url_for('logout')}}" class="btn">Logout</a></li>
         {% endif %}
