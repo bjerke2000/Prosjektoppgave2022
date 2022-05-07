@@ -1,7 +1,7 @@
-<nav>
-    <a href="/"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="MyFiles"></a>
+<nav class="navbar">
+    <a id="navbarlogo" href="/"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="MyFiles"></a>
 
-    <ul>
+    <ul id="navbarbuttons">
         <li>
         </li>
         {% if loginpage %}
