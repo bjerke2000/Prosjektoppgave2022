@@ -78,7 +78,12 @@ img {
     text-align: center;
 }
 
-.mediacontent {}
+.mediacontent {
+    max-width: 70%;
+    padding: 0 2rem;
+    display: inline-block;
+    margin-right: 2%;
+}
 
 .comment {
     max-width: 40%;
@@ -107,8 +112,7 @@ img {
 }
 
 .videoplayer {
-    max-width: 95%;
-    margin: auto;
+    max-width: 100%;
 }
 
 .sidebar {
@@ -136,6 +140,22 @@ img {
     text-align: center;
     border-radius: 2px;
     display: inline-block;
+}
+
+.navbar {
+    background-color: #212529;
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+    margin-bottom: 20px;
+}
+
+#navbarlogo {
+    margin-left: 40px;
+}
+
+#navbarbuttons {
+    margin-right: 40px;
 }
 
 .btn:hover {
@@ -405,3 +425,6 @@ nav img {
     }
 
 }
+
+
+/* ADMIN PAGE STUFF */
