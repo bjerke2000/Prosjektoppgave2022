@@ -1,0 +1,40 @@
+{% extends 'layout.html' %}
+{% block title %}Files{% endblock %}
+{% block body %}
+
+<div class="container">
+    <div class="card-grid">
+        {% for item in contents %}
+        <div class="card">
+            {% if item.type == 0 %}
+            {% if item.private == 1 %}
+            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img
+                    src="/static/images/privatefolder.png" alt="Private Folder"></a>
+            {% elif item.private == 0 %}
+            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/folder.png"
+                    alt="Folder"></a>
+            {% endif %}
+            {% elif item.type == 1 %}
+            {% if item.private == 1 %}
+            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img
+                    src="/static/images/file_private.png" alt="Private File"></a>
+            {% elif item.private == 0 %}
+            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/file.png"
+                    alt="File"></a>
+            {% endif %}
+            {% endif %}
+            <div class="container">
+                <p>{{item.itemname.split("~")[1]}}</p>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="card">
+            <a href="{{url_for('addfile', path=current_folder.path, parent=current_folder.itemname)}}"><img
+                    src="/static/images/uploadfile.png" alt="New item"></a>
+            <div class="container">
+                <p>New File</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

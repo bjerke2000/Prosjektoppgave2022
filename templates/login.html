@@ -1,0 +1,29 @@
+{% extends 'layout.html' %}
+{% block title %}Sign in{% endblock %}
+{% block body %}
+<style>
+    body {
+        background-image: url("/static/images/background.jpg");
+        background-repeat: no-repeat;
+        height: 100%;
+    }
+</style>
+<div class="inputform">
+    <img id="formlogo" src="{{ url_for('static', filename='images/logo.png') }}" alt="MyFiles">
+    <h1 class="mb-3">Log in</h1>
+    <form method="POST">
+        {{ form.csrf_token() }}
+        <div class="mb-3">
+            {{ form.email(class = "form-control") }}
+        </div>
+        <div class="mb-3">
+            {{ form.password(class = "form-control") }}
+        </div>
+        <div class="mb-3">
+            {{ form.submit(class = "btn") }}
+        </div>
+    </form>
+    <p>Not signed up yet? <a href="/register">Sign up here!</a></p>
+</div>
+
+{% endblock %}
