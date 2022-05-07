@@ -130,7 +130,7 @@ class TagModel(db.Model):
 
 #===========================FUNCTIONS===================================
 
-def PermissionHandler(required_priv, object):
+def PermissionHandler(required_priv, object): #Checks if the current user has the given priv for an item
     user_groups = current_user.groups.split(",")
     group_privs = object.group_privs
     if object.owner == current_user.id:
@@ -140,8 +140,7 @@ def PermissionHandler(required_priv, object):
             return True
     return False
 
-
-def PermissionCreator(form, group_priv_dict={}):
+def PermissionCreator(form, group_priv_dict={}): #Makes priv dictionairy from input lists
     for group in form.r_groups.data:
         group_priv_dict[group] = "r"
     for group in form.rw_groups.data:
@@ -154,14 +153,12 @@ def PermissionCreator(form, group_priv_dict={}):
             group_priv_dict.pop(ALLUSERSGROUP)
     return group_priv_dict
 
-
-def GetAvaliableName_helper(path, name):
+def GetAvaliableName_helper(path, name):#Starts GetAvaliableName
     name_number = GetAvaliableName(path, name, 1)
     added = "(" + str(name_number) + ")"
     return name + added
 
-
-def GetAvaliableName(path, name, iteration):
+def GetAvaliableName(path, name, iteration): #Iterates through all folders with the same name in a list, until it gets an avaliable name
     item = ItemModel.query.filter_by(
         path=path, itemname=name + "(" + str(iteration) + ")").first()
     if item is None:
@@ -170,7 +167,7 @@ def GetAvaliableName(path, name, iteration):
         iteration += 1
         return GetAvaliableName(path, name, iteration)
 
-def TagManager(tags):
+def TagManager(tags): #if tag already exists: append id to list, else: create tag and retrieve recieved id and append to list
     tags = tags.split(',')
     cleaned_tags = []
     final_tag_str = ','
@@ -191,7 +188,7 @@ def TagManager(tags):
         final_tag_str = final_tag_str + f'{tag.id},' #ad new tag's id's to str
     return final_tag_str
 
-def DeleteItem(id):
+def DeleteItem(id):#Deletes item and all comments attatched
     comments = CommentsModel.query.filter_by(item_id = id)
     item = ItemModel.query.filter_by(id = id).first()
     for comment in comments:
@@ -199,7 +196,7 @@ def DeleteItem(id):
     db.session.delete(item)
     db.session.commit()
 
-def DeleteUser(id):
+def DeleteUser(id): #Deletes a user and reassigns all items and comments from the user to [DELETED USER]
     comments = CommentsModel.query.filter_by(user_id = id)
     items = ItemModel.query.filter_by(owner = id)
     for comment in comments:
@@ -211,14 +208,14 @@ def DeleteUser(id):
     db.session.delete(user)
     db.session.commit()
 
-def DeleteComment(id):
+def DeleteComment(id): #Deletes a comment and returns parent for routing purposes
     comment = CommentsModel.query.filter_by(id=id).first()
     parentitem = ItemModel.query.filter_by(id=comment.item_id).first()
     db.session.delete(comment)
     db.session.commit()
     return parentitem.path, parentitem.itemname
 
-def DeleteTag(id):
+def DeleteTag(id): #Deletes Tags and removes tag from all affected items
     items = ItemModel.query.filter_by(type = 1)
     for item in items:
         if ','+str(id)+',' in item.tags:
@@ -239,8 +236,6 @@ def index():
     return redirect(url_for("login"))
 
 # login user
-
-
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -261,8 +256,6 @@ def login():
     return render_template("login.html", form=form, loginpage=True)
 
 # logout user
-
-
 @app.route('/logout')
 @login_required
 def logout():
@@ -271,8 +264,6 @@ def logout():
     return (redirect(url_for('login')))
 
 # Register new user
-
-
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
@@ -296,6 +287,7 @@ def register():
             return render_template('register.html', form=form)
     return render_template("register.html", form=form)
 
+#administrative page
 @app.route('/admin', methods=['GET','POST'])
 @login_required
 def admin():
@@ -320,6 +312,9 @@ def admin():
 @app.route('/item/<string:path>/<string:name>', methods=['GET','POST'])
 @login_required
 def item(path, name):
+    text_types = ['txt']
+    picture_types=['jpg','png','jpeg','gif']
+    video_types=['mp4','webm']
     item = ItemModel.query.filter_by(path=path, itemname=name).first()
     print(item)
     if isinstance(item, NoneType):
@@ -337,9 +332,6 @@ def item(path, name):
                     contents.append(items)
             return render_template('folder.html', contents = contents, current_folder = item, viewing=True, folder=True, admin = AdminTest())
         case 1: #Show contents if file
-            text_types = ['txt']
-            picture_types=['jpg','png','jpeg','gif']
-            video_types=['mp4','webm']
             type = item.itemname.split('~')[1].split('.')[-1] #Gets filetype
             item.ownername = UserModel.query.filter_by(id = item.owner).first().name #gets username for displaying
             if type in text_types:
