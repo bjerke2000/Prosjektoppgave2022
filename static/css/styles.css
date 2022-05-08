@@ -44,6 +44,13 @@ img {
 }
 
 
+#formlogo {
+    max-width: 15rem;
+    display: block;
+    margin: auto;
+
+}
+
 .master-content {
     display: flex;
     justify-content: center;
@@ -428,3 +435,35 @@ nav img {
 
 
 /* ADMIN PAGE STUFF */
+
+.admintable {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.admintable td,
+th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+    color: #000;
+}
+
+.admintable tr:nth-child(even) {
+    background-color: #dddddd;
+}
+
+.listcontainer {
+    background-color: whitesmoke;
+    border: 2px solid black;
+    border-radius: 25px;
+    padding: 10px;
+    margin: 10px;
+    margin-right: 17vw;
+    margin-left: 3vw;
+}
+
+.listcontainer h2 {
+    color: black
+}
