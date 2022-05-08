@@ -84,7 +84,6 @@ class UserModel(db.Model, UserMixin):
     def VerifyPassword(self, password):
         check_password_hash(self.password_hash, password)
 
-
 class GroupModel(db.Model):
     __tablename__ = 'groups'
     id = db.Column(db.Integer, primary_key=True)
@@ -95,7 +94,6 @@ class GroupModel(db.Model):
     def __init__(self, group, default_privs):
         self.group = group
         self.default_privs = default_privs
-
 
 class ItemModel(db.Model):
     __tablename__ = 'items'
@@ -113,6 +111,7 @@ class ItemModel(db.Model):
     ownername = ''
     filetype = ''
     content = ''
+    groups = []
 
 class CommentsModel(db.Model):
     __tablename__ = 'comments'
@@ -230,6 +229,33 @@ def AdminTest():
     if str(ADMINGROUP) in current_user.groups.split(','):
         return True
     return False
+
+def ItemInfoLoader(item, isitemroute=False):
+    text_types = ['txt']
+    picture_types=['jpg','png','jpeg','gif']
+    video_types=['mp4','webm']
+    item.ownername = UserModel.query.filter_by(id = item.owner).first().name
+    for group in item.group_privs.keys():
+        item.groups.append(GroupModel.query.filter_by(id = group).first().group)
+    if ALLUSERSGROUP in item.group_privs:
+        item.private = 0
+    else:
+        item.private = 1
+    if item.type == 1:
+        type = item.itemname.split('~')[1].split('.')[-1] #Gets filetype
+        if type in text_types:
+            if isitemroute:
+                with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'r', encoding='utf-8') as f:
+                        lines = f.readlines()
+                item.content=lines
+            item.filetype = 'text'
+        elif type in picture_types:
+                item.filetype = 'picture'
+        elif type in video_types:
+                item.filetype = 'video'
+    return item
+    
+
 #===========================ROUTES======================================
 
 # index redirects to login
@@ -309,7 +335,6 @@ def admin():
         return render_template('admin.html', users = Users, groups = Groups, items = Items, comments = Comments, tags = Tags, admin = AdminTest())
     return redirect(url_for('index'))
 
-
 #Display a file or folder
 @app.route('/item/<string:path>/<string:name>', methods=['GET','POST'])
 @login_required
@@ -327,33 +352,12 @@ def item(path, name):
             contents = []
             for item in unchecked_contents:
                 if PermissionHandler("r", item):
-                    if ALLUSERSGROUP in item.group_privs:
-                        item.private = 0
-                    else:
-                        item.private = 1
-                    if item.type == 1:
-                        type = item.itemname.split('~')[1].split('.')[-1] #Gets filetype
-                        if type in text_types:
-                                item.filetype = 'text'
-                        elif type in picture_types:
-                                item.filetype = 'picture'
-                        elif type in video_types:
-                                item.filetype = 'video'
+                    ItemInfoLoader(item)
                     contents.append(item)
             return render_template('folder.html', contents = contents, current_folder = item, viewing=True, folder=True, admin = AdminTest())
         case 1: #Show contents if file
-            type = item.itemname.split('~')[1].split('.')[-1] #Gets filetype
-            item.ownername = UserModel.query.filter_by(id = item.owner).first().name #gets username for displaying
-            if type in text_types:
-                    with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'r', encoding='utf-8') as f:
-                        lines = f.readlines()
-                    item.filetype = 'text'
-                    item.content = lines
-            elif type in picture_types:
-                    item.filetype = 'picture'
-            elif type in video_types:
-                    item.filetype = 'video'
-            else: #if no match <---
+            ItemInfoLoader(item, True)
+            if item.filetype == '':
                 flash('Not able to open file')
                 return redirect(url_for('previous', path = path))
             commentform = CommentForm()
