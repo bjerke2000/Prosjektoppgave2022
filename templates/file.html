@@ -1,18 +1,18 @@
 {% extends 'layout.html' %}
 {% block body %}
 <div class="master-content">
-    {% if fileinfo[0] == 'text' %}
+    {% if item.filetype == 'text' %}
     <div class="textcontent">
-        {% for line in fileinfo[1] %}
+        {% for line in item.content %}
         <p>{{line}}</p>
 
         {% endfor %}
     </div>
-    {% elif fileinfo[0] == 'picture' %}
+    {% elif item.filetype == 'picture' %}
     <div class="mediacontent">
         <img src="/static/content/{{item.itemname}}" alt="{{item.itemname}}">
     </div>
-    {% elif fileinfo[0] == 'video' %}
+    {% elif item.filetype == 'video' %}
     <div class="mediacontent">
         <video class="videoplayer" controls>
             <source src="/static/content/{{item.itemname}}" type="video/{{item.itemname.split('~')[1].split('.')[-1]}}">

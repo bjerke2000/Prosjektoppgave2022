@@ -111,6 +111,8 @@ class ItemModel(db.Model):
     private = 0
     editable = 0
     ownername = ''
+    filetype = ''
+    content = ''
 
 class CommentsModel(db.Model):
     __tablename__ = 'comments'
@@ -323,28 +325,34 @@ def item(path, name):
         case 0:#Show contents of folder
             unchecked_contents = ItemModel.query.filter_by(path = f"{item.path}{item.itemname.strip('-').split('~')[0]}-")
             contents = []
-            for items in unchecked_contents:
-                if PermissionHandler("r", items):
-                    if ALLUSERSGROUP in items.group_privs:
-                        items.private = 0
+            for item in unchecked_contents:
+                if PermissionHandler("r", item):
+                    if ALLUSERSGROUP in item.group_privs:
+                        item.private = 0
                     else:
-                        items.private = 1
-                    contents.append(items)
+                        item.private = 1
+                    if item.type == 1:
+                        type = item.itemname.split('~')[1].split('.')[-1] #Gets filetype
+                        if type in text_types:
+                                item.filetype = 'text'
+                        elif type in picture_types:
+                                item.filetype = 'picture'
+                        elif type in video_types:
+                                item.filetype = 'video'
+                    contents.append(item)
             return render_template('folder.html', contents = contents, current_folder = item, viewing=True, folder=True, admin = AdminTest())
         case 1: #Show contents if file
             type = item.itemname.split('~')[1].split('.')[-1] #Gets filetype
             item.ownername = UserModel.query.filter_by(id = item.owner).first().name #gets username for displaying
             if type in text_types:
-                    filetype = 'text'
                     with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'r', encoding='utf-8') as f:
                         lines = f.readlines()
-                    fileinfo=[filetype,lines]
+                    item.filetype = 'text'
+                    item.content = lines
             elif type in picture_types:
-                    filetype = 'picture'
-                    fileinfo=[filetype]
+                    item.filetype = 'picture'
             elif type in video_types:
-                    filetype='video'
-                    fileinfo=[filetype]
+                    item.filetype = 'video'
             else: #if no match <---
                 flash('Not able to open file')
                 return redirect(url_for('previous', path = path))
@@ -362,7 +370,7 @@ def item(path, name):
             comments = CommentsModel.query.filter_by(item_id = item.id).all()
             for comment in comments:
                 comment.username = UserModel.query.filter_by(id = comment.user_id).first().name
-            return render_template('file.html', item = item, fileinfo = fileinfo, comments = comments, commentform = commentform, current_folder = item, viewing = True, admin = AdminTest())
+            return render_template('file.html', item = item, comments = comments, commentform = commentform, current_folder = item, viewing = True, admin = AdminTest())
 
 #Return to parent folder
 @app.route('/previous/<string:path>')
