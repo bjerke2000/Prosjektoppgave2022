@@ -111,7 +111,8 @@ class ItemModel(db.Model):
     ownername = ''
     filetype = ''
     content = ''
-    groups = []
+    groups = ''
+    named_tags =''
 
 class CommentsModel(db.Model):
     __tablename__ = 'comments'
@@ -236,12 +237,16 @@ def ItemInfoLoader(item, isitemroute=False):
     video_types=['mp4','webm']
     item.ownername = UserModel.query.filter_by(id = item.owner).first().name
     for group in item.group_privs.keys():
-        item.groups.append(GroupModel.query.filter_by(id = group).first().group)
+        item.groups += item.groups + GroupModel.query.filter_by(id = group).first().group + ','
+    item.groups = item.groups[:-1]
     if ALLUSERSGROUP in item.group_privs:
         item.private = 0
     else:
         item.private = 1
     if item.type == 1:
+        for tag_id in item.tags.split(',')[1:-1]:
+            item.named_tags = item.named_tags + TagModel.query.filter_by(id=tag_id).first().tag + ','
+        item.named_tags = item.named_tags[:-1]
         type = item.itemname.split('~')[1].split('.')[-1] #Gets filetype
         if type in text_types:
             if isitemroute:
@@ -295,6 +300,8 @@ def logout():
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
+    groups = [(g.id, g.name) for g in GroupModel.query.order_by('group')][2:] #Exclude first two values since they are admin and all users
+    form.groups.choices = groups
     if form.validate_on_submit():
         user = UserModel.query.filter_by(email=form.email.data).first()
         if user is None:
@@ -324,10 +331,7 @@ def admin():
         Groups = GroupModel.query.all()
         Items = ItemModel.query.all()
         for item in Items:
-            if ALLUSERSGROUP in item.group_privs:
-                item.private = 0
-            else:
-                item.private = 1
+            ItemInfoLoader(item)
         Comments = CommentsModel.query.all()
         for comment in Comments:
             comment.username = UserModel.query.filter_by(id = comment.user_id).first().name
@@ -339,23 +343,21 @@ def admin():
 @app.route('/item/<string:path>/<string:name>', methods=['GET','POST'])
 @login_required
 def item(path, name):
-    text_types = ['txt']
-    picture_types=['jpg','png','jpeg','gif']
-    video_types=['mp4','webm']
     item = ItemModel.query.filter_by(path=path, itemname=name).first()
-    print(item)
     if isinstance(item, NoneType):
         return redirect(url_for('previous', path=path))
     match item.type:
         case 0:#Show contents of folder
+            path = item.path.replace('-','/')+item.itemname
             unchecked_contents = ItemModel.query.filter_by(path = f"{item.path}{item.itemname.strip('-').split('~')[0]}-")
             contents = []
-            for item in unchecked_contents:
-                if PermissionHandler("r", item):
-                    ItemInfoLoader(item)
-                    contents.append(item)
-            return render_template('folder.html', contents = contents, current_folder = item, viewing=True, folder=True, admin = AdminTest())
+            for items in unchecked_contents:
+                if PermissionHandler("r", items):
+                    ItemInfoLoader(items)
+                    contents.append(items)
+            return render_template('folder.html', contents = contents, current_folder = item, viewing=True, folder=True, path = path, admin = AdminTest())
         case 1: #Show contents if file
+            path = item.path.replace('-','/')+item.itemname.split('~')[1]
             ItemInfoLoader(item, True)
             if item.filetype == '':
                 flash('Not able to open file')
@@ -374,7 +376,7 @@ def item(path, name):
             comments = CommentsModel.query.filter_by(item_id = item.id).all()
             for comment in comments:
                 comment.username = UserModel.query.filter_by(id = comment.user_id).first().name
-            return render_template('file.html', item = item, comments = comments, commentform = commentform, current_folder = item, viewing = True, admin = AdminTest())
+            return render_template('file.html', item = item, comments = comments, commentform = commentform, current_folder = item, viewing = True, path = path, admin = AdminTest())
 
 #Return to parent folder
 @app.route('/previous/<string:path>')
@@ -397,6 +399,9 @@ def previous(path):
 @login_required
 def newfolder(path, parent):
     form = FolderForm()
+    groups = [(g.id, g.group) for g in GroupModel.query.order_by('group')][2:] #Exclude first two values since they are admin and all users
+    form.r_groups.choices = groups
+    form.rw_groups.choices = groups
     if form.validate_on_submit():
         parent = parent.strip('-')
         itempath = path + parent +"-"
@@ -423,8 +428,10 @@ def newfolder(path, parent):
 
 @app.route("/addfile/<string:path>/<string:parent>", methods=['GET','POST'])
 def addfile(path, parent):
-    current_folder = ItemModel.query.filter_by(path = path, itemname = parent).first()
     form = FileForm()
+    groups = [(g.id, g.group) for g in GroupModel.query.order_by('group')][2:] #Exclude first two values since they are admin and all users
+    form.r_groups.choices = groups
+    form.rw_groups.choices = groups
     if form.validate_on_submit():
         parent = parent.strip('-')
         itempath = path + parent +"-"
@@ -450,7 +457,6 @@ def addfile(path, parent):
         db.session.commit()
         flash('Item created succesfully', 'success')
         return redirect(url_for('item', path=itempath, name=itemname))
-    flash(form.errors)
     return render_template("additem.html", form=form, admin = AdminTest())
 
 @app.route('/delcomment/<int:id>', methods=['GET','POST'])
@@ -479,7 +485,8 @@ def admin_delete(table, id):
                 #flash(f'Comment succesfully deleted', 'success')
         return redirect(url_for('admin'))
     return redirect(url_for('index'))
-            
+
+
     
 
 

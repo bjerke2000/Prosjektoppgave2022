@@ -33,7 +33,6 @@ class RegisterForm(FlaskForm):
     )
     groups = SelectMultipleField(
         "Select Field",
-        choices= [(ADMINGROUP,'Admin'),(TESTGROUP,'Test Group')],
         coerce=int
     )
     submit = SubmitField("Register")
@@ -77,12 +76,10 @@ class FolderForm(FlaskForm):
     )
     r_groups = SelectMultipleField(
         "Groups with read Privilages",
-        choices=[(TESTGROUP,"Test Group")],
         coerce=int
     )
     rw_groups = SelectMultipleField(
         "Groups with read and write Privilages",
-        choices=[(TESTGROUP,"Test Group")],
         coerce=int
     )
     submit = SubmitField("Create")
@@ -103,12 +100,10 @@ class FileForm(FlaskForm):
         )
     r_groups = SelectMultipleField(
         "Groups with read Privilages",
-        choices=[(TESTGROUP,"Test Group")],
         coerce=int
     )
     rw_groups = SelectMultipleField(
         "Groups with read and write Privilages",
-        choices=[(TESTGROUP,"Test Group")],
         coerce=int
     )
     private = SelectField(
@@ -128,3 +123,4 @@ class CommentForm(FlaskForm):
     render_kw={'placeholder':'Comment'}
     )
     submit = SubmitField('Post')
+
