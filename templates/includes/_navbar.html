@@ -9,13 +9,14 @@
         <li><a class="btn" href="{{url_for('previous', path = current_folder.path)}}">Go back</a></li>
         <li><a href="{{url_for('logout')}}" class="btn">Logout</a></li>
         {% if folder %}
-        <li><a href="{{url_for('newfolder', path = current_folder.path, parent=current_folder.itemname)}}"class="btn">New Folder</a></li>
-        {% endif %}  
+        <li><a href="{{url_for('newfolder', path = current_folder.path, parent=current_folder.itemname)}}"
+                class="btn">New Folder</a></li>
+        {% endif %}
         {% else %}
         <li><a href="{{url_for('logout')}}" class="btn">Logout</a></li>
         {% endif %}
         {% if admin %}
-        <li><a href="{{url_for('admin')}}"class="btn">Admin Page</a></li>
-        {% endif %} 
+        <li><a href="{{url_for('admin')}}" class="btn">Admin Page</a></li>
+        {% endif %}
     </ul>
 </nav>

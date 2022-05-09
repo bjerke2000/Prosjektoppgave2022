@@ -14,11 +14,15 @@
     box-sizing: border-box;
 }
 
+
+
+
 /* Set default styling */
 body {
     font-family: 'Inter', sans-serif;
     background: var(--background-color);
     color: #999;
+    padding-bottom: 2.5rem;
 }
 
 h1,
@@ -43,6 +47,13 @@ img {
     width: 100%;
 }
 
+
+#formlogo {
+    max-width: 15rem;
+    display: block;
+    margin: auto;
+
+}
 
 .master-content {
     display: flex;
@@ -74,7 +85,6 @@ img {
     max-width: 70%;
     margin: auto;
     padding: 0 2rem;
-    background-color: #313131;
     text-align: center;
 }
 
@@ -148,6 +158,7 @@ img {
     align-items: center;
     max-width: 100%;
     margin-bottom: 20px;
+
 }
 
 #navbarlogo {
@@ -273,48 +284,6 @@ nav img {
     margin: 0 0 2rem;
 }
 
-/* Tabs Section */
-.tabs {
-    background: var(--dark-color);
-    padding-top: 1rem;
-    border-bottom: 3px solid #3d3d3d;
-}
-
-.tabs .container {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    grid-gap: 1rem;
-}
-
-.tabs .container>div {
-    padding: 1.5rem 0;
-}
-
-.footer {
-    max-width: 70%;
-    margin: 1rem auto;
-    overflow: auto;
-}
-
-
-.footer p {
-    margin-bottom: 1.5rem;
-}
-
-
-.footer .lang-select {
-    margin-top: 2rem;
-    color: #999;
-    background-color: #000;
-    background-image: none;
-    border: 1px solid #333;
-    padding: 1rem 1.2rem;
-    border-radius: 5px;
-}
-
 .mb-3 {
     margin-bottom: 1rem;
 }
@@ -336,7 +305,7 @@ nav img {
 
 .inputform {
     background-color: rgb(25, 25, 25);
-    max-width: 40%;
+    max-width: 30vw;
     padding: 2rem;
     margin: auto;
 
@@ -349,6 +318,7 @@ nav img {
     margin-bottom: 1rem;
     padding: 20px;
 }
+
 
 .success {
     background-color: #04AA6D;
@@ -427,4 +397,51 @@ nav img {
 }
 
 
+.footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #212529;
+    color: white;
+    padding: 10px;
+    height: 2.5rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+
 /* ADMIN PAGE STUFF */
+
+.admintable {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.admintable td,
+th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+    color: #000;
+}
+
+.admintable tr:nth-child(even) {
+    background-color: #dddddd;
+}
+
+.listcontainer {
+    background-color: whitesmoke;
+    border: 2px solid black;
+    border-radius: 25px;
+    padding: 10px;
+    margin: 10px;
+    margin-right: 17vw;
+    margin-left: 3vw;
+}
+
+.listcontainer h2 {
+    color: black
+}

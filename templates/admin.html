@@ -1,34 +1,135 @@
-Users
-<ul>
-    {% for user in users %}
-        <li><a href="{{url_for('admin_delete', table='users', id = user.id )}}">Delete</a> id:{{user.id}} ||||| name:{{user.name}} ||||| email:{{user.email}} ||||| groups:{{user.groups}} ||||| passwordhash:{{user.password_hash}}</li>
-    {% endfor %}    
-</ul>
+{% extends 'layout.html' %}
+{% block body %}
+<div class="listcontainer">
+    <h2>Users</h2>
+    <table class="admintable">
+        <tr>
+            <th></th>
+            <th>id</th>
+            <th>name</th>
+            <th>email</th>
+            <th>groups</th>
+            <th>password_hash</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+            <td><a class="btn" href="{{url_for('admin_delete', table='users', id = user.id )}}">Delete</a></td>
+            <td>{{user.id}}</td>
+            <td>{{user.name}}</td>
+            <td>{{user.email}}</td>
+            <td>{{user.groups}}</td>
+            <td>{{user.password_hash}}</td>
+        </tr>
+        {% endfor %}
+    </table>
 
-Groups
-<ul>
-    {% for group in groups %}
-        <li> id:{{group.id}} ||||| group:{{group.group}} ||||| default_privs:{{group.default_privs}}</li>
-    {% endfor %} 
-</ul>
 
-Items
-<ul>
-    {% for item in items %}
-        <li><a href="{{url_for('admin_delete', table='items', id = item.id)}}">Delete</a>   id:{{item.id}} ||||| <a href="{{url_for('item', path = item.path, name = item.itemname)}}">itemname:{{item.itemname}}</a> ||||| {{item.path}} ||||| ownerid:{{item.owner}} ||||| private:{{item.private}} ||||| group_privs:{{item.group_privs}} ||||| tags:{{item.tags}} ||||| postdate:{{item.post_date}} ||||| last_edited:{{item.edited_date}}</li>
-    {% endfor %} 
-</ul>
+</div>
 
-Comments
-<ul>
-    {% for comment in comments %}
-        <li><a href="{{url_for('admin_delete', table='comments', id = comment.id)}}">Delete</a> id:{{comment.id}}|||||  item_id:{{comment.item_id}} ||||| user_id:{{comment.user_id}} |||||username:{{comment.username}} ||||| date:{{comment.date}} ||||| comment:{{comment.comment}}</li>
-    {% endfor %} 
-</ul>
 
-Tags
-<ul>
-    {% for tag in tags %}
-        <li><a href="{{url_for('admin_delete', table='tags', id = tag.id)}}">Delete</a> id:{{tag.id}} ||||| tag:{{tag.tag}}</li>
-    {% endfor %} 
-</ul>
+<div class="listcontainer">
+    <h2>Groups</h2>
+    <table class="admintable">
+        <tr>
+            <th>id</th>
+            <th>group</th>
+            <th>default_privs</th>
+        </tr>
+        {% for group in groups %}
+        <tr>
+            <td>{{group.id}}</td>
+            <td>{{group.group}}</td>
+            <td>{{group.default_privs}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+
+</div>
+
+
+
+<div class="listcontainer">
+    <h2>Items</h2>
+    <table class="admintable">
+        <tr>
+            <th></th>
+            <th></th>
+            <th>id</th>
+            <th>itemame</th>
+            <th>path</th>
+            <th>owner</th>
+            <th>private</th>
+            <th>group_Privs</th>
+            <th>tags</th>
+            <th>post_date</th>
+            <th>edited_date</th>
+        </tr>
+        {% for item in items %}
+        <tr>
+            <td><a class="btn" href="{{url_for('admin_delete', table='items', id = item.id)}}">Delete</a></td>
+            <td><a class="btn" href="{{url_for('item', path = item.path, name = item.itemname)}}">Go to</a></td>
+            <td>{{item.id}}</td>
+            <td>{{item.itemname}}</td>
+            <td>{{item.path}}</td>
+            <td>{{item.owner}} ({{item.ownername}})</td>
+            <td>{{item.private}}</td>
+            <td>{{item.group_privs}}</td>
+            <td>{{item.tags}}</td>
+            <td>{{item.post_date}}</td>
+            <td>{{item.edited_date}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+
+
+<div class="listcontainer">
+    <h2>Comments</h2>
+    <table class="admintable">
+        <tr>
+            <th></th>
+            <th>id</th>
+            <th>item_id</th>
+            <th>user_id</th>
+            <th>username</th>
+            <th>date</th>
+            <th>comment</th>
+        </tr>
+        {% for comment in comments %}
+        <tr>
+            <td><a class="btn" href="{{url_for('admin_delete', table='comments', id = comment.id)}}">Delete</a></td>
+            <td>{{comment.id}}</td>
+            <td>{{comment.item_id}}</td>
+            <td>{{comment.user_id}}</td>
+            <td>{{comment.username}}</td>
+            <td>{{comment.date}}</td>
+            <td>{{comment.comment}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+
+</div>
+
+
+
+<div class="listcontainer">
+    <h2>Tags</h2>
+    <table class="admintable">
+        <tr>
+            <th></th>
+            <th>id</th>
+            <th>tag</th>
+        </tr>
+        {% for tag in tags %}
+        <tr>
+            <td><a class="btn" href="{{url_for('admin_delete', table='tags', id = tag.id)}}">Delete</a></td>
+            <td>{{tag.id}}</td>
+            <td>{{tag.tag}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}
