@@ -117,7 +117,26 @@ class FileForm(FlaskForm):
     submit = SubmitField('Upload')
 
 class EditFileForm(FlaskForm):
-    pass
+    tags = StringField(
+        'Tags', 
+        validators=[Length(max=50)], 
+        render_kw={'placeholder':'Tags seperated by comma'}
+        )
+    r_groups = SelectMultipleField(
+        "Groups with read Privilages",
+        coerce=int
+    )
+    rw_groups = SelectMultipleField(
+        "Groups with read and write Privilages",
+        coerce=int
+    )
+    private = SelectField(
+        "Private",
+        choices=[(0,"Public"),(1,"Private")],
+        default=(0,"Public"),
+        coerce=int
+    )
+    submit = SubmitField('Upload')
 
 class CommentForm(FlaskForm):
     comment = StringField('Comment',

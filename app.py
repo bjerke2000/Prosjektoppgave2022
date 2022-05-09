@@ -97,7 +97,7 @@ class ItemModel(db.Model):
     __tablename__ = 'item'
     id = db.Column(db.Integer, primary_key=True)
     itemname = db.Column(db.String(250), nullable = False) #"filnavn(.filtype om fil)~uuid"
-    owner = db.Column(db.Integer, db.ForeignKey('users.id')) #fk til users id
+    owner = db.Column(db.Integer, db.ForeignKey('user.id')) #fk til users id
     post_date = db.Column(db.DateTime, nullable = False)#date posted
     edited_date = db.Column(db.DateTime, nullable = False)
     type = db.Column(db.Boolean)#0 = mappe : 1 = fil
@@ -115,8 +115,8 @@ class ItemModel(db.Model):
 class CommentsModel(db.Model):
     __tablename__ = 'comment'
     id = db.Column(db.Integer, primary_key = True)
-    item_id = db.Column(db.Integer, db.ForeignKey('items.id'))#fk to Items id, that has the comment section.
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))#fk to users id, to know who made the comment
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'))#fk to Items id, that has the comment section.
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))#fk to users id, to know who made the comment
     comment = db.Column(db.String(150), nullable=False) #comment text
     date = db.Column(db.DateTime, nullable = False)#date posted
     username = ''
@@ -581,6 +581,14 @@ def remove_group_member(user, group, route):
 def edit(path, name):
     form = EditFileForm()
     item = ItemModel.query.filter_by(path=path, itemname=name).first()
+    ItemInfoLoader(item)
+    groups = GroupTupleManager()
+    form.r_groups.choices = groups
+    form.rw_groups.choices = groups
+    form.tags.value = item.named_tags
+    form.private.value = (item.private, 'Private' if item.private else 'Public')
+    return render_template('edit.html', form = form, item=item)
+
 
 #På bunnj
 if __name__ == "__main__":
