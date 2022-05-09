@@ -26,6 +26,7 @@
         <p>Uploaded by: {#item.ownername#}</a>
         <p>Created: {{item.post_date}}</p>
         <p>Updated:{{item.edited_date}}</p>
+        <a href="{{url_for('edit', path = item.path, name = item.itemname )}}">edit</a>
     </div>
 </div>
 <div class="comments">
