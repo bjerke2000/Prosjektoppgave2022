@@ -1,17 +1,31 @@
 {% extends 'layout.html' %}
 {% block title %}Groups{% endblock %}
 {% block body %}
+{% if current_user == %}
+<h1></h1>
+{% for id, group in groups_dict.items() %}
+<div class="listcontainer">
+    <h2>{{group}}</h2>
+    {% for user in group_members_dict[id] %}
+    <li><a href="{{url_for('remove_group_member', user = user[0], group = id)}}">Remove</a> {{user[1]}}</li>
+    {% endfor %}
+</div>
+{% endfor %}
+
+
+
+
 <div class="container">
     <ul>
-    {% for id, group in groups_dict.items() %}
+        {% for id, group in groups_dict.items() %}
         <li>{{group}}
             <ul>
-                {% for user in group_members_dict[id] %}¨
-                    <li><a href="{{url_for('remove_group_member', user = user[0], group = id)}}">Remove</a>  {{user[1]}}</li>
+                {% for user in group_members_dict[id] %}
+                <li><a href="{{url_for('remove_group_member', user = user[0], group = id)}}">Remove</a> {{user[1]}}</li>
                 {% endfor %}
             </ul>
         </li>
-    {% endfor %}
+        {% endfor %}
     </ul>
     Create new group
     <form method="POST">
