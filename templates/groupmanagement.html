@@ -41,7 +41,7 @@
                 <tr>
                     <td>{{user[1]}}</td>
                     <td>{% if group_members_dict[id]|length != 1 %}<a class="btn" style="color:white"
-                            href="{{url_for('remove_group_member', user = user[0], group = id)}}">Remove</a>{% endif %}
+                            href="{{url_for('remove_group_member', user = user[0], group = id, route = route)}}">Remove</a>{% endif %}
                     </td>
                 </tr>
 
