@@ -281,7 +281,7 @@ nav img {
 }
 
 .tabs .container {
-    display: grid;
+    display: block;
     grid-template-columns: repeat(3, 1fr);
     justify-content: center;
     align-items: center;
@@ -371,6 +371,58 @@ nav img {
     color: black;
 }
 
+.card-grid {
+    grid-gap: 2rem;
+}
+
+.card img {
+    height: 4vw;
+    width: 4vw;
+    
+}
+
+.card {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 20rem auto auto 25rem;
+    grid-template-areas: 
+    "icon name tags owner_edit";
+    border: 1px solid black;    
+    background-color: #555555;
+    margin-bottom: 10px;
+}
+
+.card a {
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 15px;
+}
+
+.card:hover {
+    opacity: 70%;
+}
+
+.thumbnail {
+    grid-area: icon;
+    }
+
+.text_container {
+    grid-area: text;
+    }
+
+.text_left {
+    grid-area: name;
+}
+
+.tags {
+    grid-area: tags;
+}
+
+.text_right {
+    grid-area: owner_edit;
+}
+
+
 @media (max-width: 960px) {
     .showcase {
         height: 70vh;
@@ -381,32 +433,6 @@ nav img {
         left: 5%;
         transform: translate(0);
     }
-}
-
-.card-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-gap: 2rem;
-}
-
-.card {
-    border: 1px solid black;
-    background-color: #000;
-}
-
-.card a {
-    padding-left: 40px;
-    padding-right: 40px;
-    padding-top: 40px;
-}
-
-.card p {
-    font-size: 20px;
-    text-align: center;
-}
-
-.card:hover {
-    opacity: 70%;
 }
 
 @media (max-width: 600px) {
