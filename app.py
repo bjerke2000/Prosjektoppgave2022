@@ -89,11 +89,9 @@ class GroupModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     group = db.Column(db.String(150), nullable=False,
                       unique=True)  # unike gruppenavn
-    default_privs = db.Column(db.String(4), nullable=False)  # r/rw/none
 
-    def __init__(self, group, default_privs):
+    def __init__(self, group):
         self.group = group
-        self.default_privs = default_privs
 
 class ItemModel(db.Model):
     __tablename__ = 'items'
@@ -266,21 +264,6 @@ def ItemInfoLoader(item, isitemroute=False):
     return item
 
 def GroupManagerLoader(groups):
-    groupform = GroupForm()
-    members = [(u.id, u.name) for u in UserModel.query.order_by('name')] #Exclude first value since it is root user
-    members.remove((1,'root'))#Removes root user from list
-    members.remove((DELETED_USER,'[DELETED USER]')) #Removes Deleted user from list 
-    if groupform.validate_on_submit():
-        newgroup = GroupModel(
-            group = groupform.group.data
-        )
-        db.session.add(newgroup)
-        for users in groupform.members.data:
-            user = UserModel.query.filter_by(id = users).first()
-            user.groups = user.groups + str(GroupModel.query.filter_by(group = groupform.group.data).first().id) +','
-        db.session.commit()
-        return True
-    groupform.members.choices = members
     groups_dict = {}
     group_members_dict={}
     for id in groups.split(',')[1:-1]:
@@ -291,7 +274,18 @@ def GroupManagerLoader(groups):
         for user in users:
             if group in user.groups.split(',')[1:-1]:
                 group_members_dict[group].append((user.id, user.name))
-    return group_members_dict, groupform, groups_dict
+    return group_members_dict,  groups_dict
+
+def GroupTupleManager():
+    groups = [(g.id, g.group) for g in GroupModel.query.order_by('group')][2:] #Exclude first two values since they are admin and all users
+    final_group = []
+    for group in groups:
+        for g in current_user.groups.split(',')[1:-1]:
+            if g == str(group[0]):
+                final_group.append(group)
+    return(final_group)
+
+
 #===========================ROUTES======================================
 
 # index redirects to login
@@ -331,8 +325,7 @@ def logout():
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
-    groups = [(g.id, g.group) for g in GroupModel.query.order_by('group')][2:] #Exclude first two values since they are admin and all users
-    form.groups.choices = groups
+    form.groups.choices = GroupTupleManager()
     if form.validate_on_submit():
         user = UserModel.query.filter_by(email=form.email.data).first()
         if user is None:
@@ -431,7 +424,7 @@ def previous(path):
 @login_required
 def newfolder(path, parent):
     form = FolderForm()
-    groups = [(g.id, g.group) for g in GroupModel.query.order_by('group')][2:] #Exclude first two values since they are admin and all users
+    groups = GroupTupleManager()
     form.r_groups.choices = groups
     form.rw_groups.choices = groups
     if form.validate_on_submit():
@@ -461,7 +454,7 @@ def newfolder(path, parent):
 @app.route("/addfile/<string:path>/<string:parent>", methods=['GET','POST'])
 def addfile(path, parent):
     form = FileForm()
-    groups = [(g.id, g.group) for g in GroupModel.query.order_by('group')][2:] #Exclude first two values since they are admin and all users
+    groups = GroupTupleManager()
     form.r_groups.choices = groups
     form.rw_groups.choices = groups
     if form.validate_on_submit():
@@ -526,28 +519,70 @@ def dashboard():
         groups_dict[id] = GroupModel.query.filter_by(id = id).first().group
     return render_template('dashboard.html', groups_dict = groups_dict)
 
-@app.route('/usergroupmanagment', methods=['POST','GET'])
+@app.route('/usergroupmanagement', methods=['POST','GET'])
 @login_required
-def usergroupmanagment(): #Shows groups that user is apart of
+def usergroupmanagement(): #Shows groups that user is apart of
+    groupform = GroupForm()
     info = GroupManagerLoader(current_user.groups)
-    return render_template('groupmanagment.html', groups_dict = info[2], group_members_dict = info[0], groupform = info[1])
+    members = [(u.id, u.name) for u in UserModel.query.order_by('name')] #Exclude first value since it is root user
+    members.remove((1,'root'))#Removes root user from list
+    members.remove((DELETED_USER,'[DELETED USER]')) #Removes Deleted user from list 
+    groupform.members.choices = members
+    if groupform.validate_on_submit():
+        if GroupModel.query.filter_by(group = groupform.group.data).first() is None:
+            newgroup = GroupModel(
+                group = groupform.group.data
+            )
+            db.session.add(newgroup)
+            membersdata = groupform.members.data
+            if current_user.id not in membersdata:
+                membersdata.append(current_user.id)
+            for users in membersdata:
+                user = UserModel.query.filter_by(id = users).first()
+                user.groups = user.groups + str(GroupModel.query.filter_by(group = groupform.group.data).first().id) +','
+            db.session.commit()
+            return redirect(url_for('usergroupmanagement'))
+        else:
+            flash('Group already exists', 'error')
+    return render_template('groupmanagement.html', groups_dict = info[1], group_members_dict = info[0], groupform = groupform, route='user')
 
-@app.route('/admingroupmanagment', methods=['POST','GET'])
+@app.route('/admingroupmanagement', methods=['POST','GET'])
 @login_required
-def admingroupmanagment(): #Shows all groups
+def admingroupmanagement(): #Shows all groups
     if AdminTest():
+        groupform = GroupForm()
         groups = ','
         for group in GroupModel.query.all():
             groups = groups + str(group.id)+','
         info = GroupManagerLoader(groups)
-        return render_template('groupmanagment.html', groups_dict = info[2], group_members_dict = info[0], groupform = info[1])
+        members = [(u.id, u.name) for u in UserModel.query.order_by('name')] #Exclude first value since it is root user
+        members.remove((1,'root'))#Removes root user from list
+        members.remove((DELETED_USER,'[DELETED USER]')) #Removes Deleted user from list 
+        groupform.members.choices = members
+        if groupform.validate_on_submit():
+            if GroupModel.query.filter_by(group = groupform.group.data).first() is None:
+                newgroup = GroupModel(
+                    group = groupform.group.data
+                )
+                db.session.add(newgroup)
+                membersdata = groupform.members.data
+                if current_user.id not in membersdata:
+                    membersdata.append(current_user.id)
+                for users in membersdata:
+                    user = UserModel.query.filter_by(id = users).first()
+                    user.groups = user.groups + str(GroupModel.query.filter_by(group = groupform.group.data).first().id) +','
+                db.session.commit()
+                return redirect(url_for('admingroupmanagement'))
+        else:
+            flash('Group already exists', 'error')
+        return render_template('groupmanagement.html', groups_dict = info[1], group_members_dict = info[0], groupform = groupform, route='admin')
     return redirect(url_for('item', path = 'root', name = '-'))
 
-@app.route('/remove_group_member/<int:user>/<int:group>')
+@app.route('/remove_group_member/<int:user>/<int:group>/<string:route>')
 @login_required
-def remove_group_member(user, group):
+def remove_group_member(user, group, route):
     DeleteGroupMember(user, group)
-    return redirect(url_for('groupmanagment'))
+    return redirect(url_for(f'{route}groupmanagement'))
 
 #På bunnj
 if __name__ == "__main__":

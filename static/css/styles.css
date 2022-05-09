@@ -284,29 +284,6 @@ nav img {
     margin: 0 0 2rem;
 }
 
-
-.footer {
-    max-width: 70%;
-    margin: 1rem auto;
-    overflow: auto;
-}
-
-
-.footer p {
-    margin-bottom: 1.5rem;
-}
-
-
-.footer .lang-select {
-    margin-top: 2rem;
-    color: #999;
-    background-color: #000;
-    background-image: none;
-    border: 1px solid #333;
-    padding: 1rem 1.2rem;
-    border-radius: 5px;
-}
-
 .mb-3 {
     margin-bottom: 1rem;
 }
