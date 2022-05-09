@@ -1,31 +1,112 @@
 {% extends 'layout.html' %}
 {% block title %}Groups{% endblock %}
+
 {% block body %}
-<div class="container">
-    <ul>
-    {% for id, group in groups_dict.items() %}
-        <li>{{group}}
-            <ul>
-                {% for user in group_members_dict[id] %}¨
-                    <li><a href="{{url_for('remove_group_member', user = user[0], group = id)}}">Remove</a>  {{user[1]}}</li>
-                {% endfor %}
-            </ul>
-        </li>
-    {% endfor %}
-    </ul>
-    Create new group
-    <form method="POST">
-        {{ groupform.csrf_token() }}
-        <div class="mb-3">
-            {{ groupform.group(class = "form-control") }}
-        </div>
-        <div class="mb-3">
-            Members
-            {{ groupform.members(class = "form-control") }}
-        </div>
-        <div class="mb-3">
-            {{ groupform.submit(class = "btn") }}
-        </div>
-    </form>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="/resources/demos/style.css">
+<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+{% if ',2,' in current_user.groups %}
+<div class="container center">
+    <h1>Admin group management</h1>
+    <button id="myBtn" class="btn">
+        <h4>Create new group</h4>
+    </button>
 </div>
+{% else %}
+<div class="container center">
+    <h1>Group management</h1>
+    <button id="myBtn" class="btn">
+        <h4>Create new group</h4>
+    </button>
+</div>
+{% endif %}
+<br>
+<script>
+    $(function () {
+        $("#accordion").accordion({ collapsible: true, active: false });
+    });
+</script>
+<div class="container">
+    <div id="accordion">
+        {% for id, group in groups_dict.items() %}
+        <h3>{{group}}</h3>
+        <div>
+            <table class="admintable">
+                <tr>
+                    <th>Name</th>
+                    <th></th>
+                </tr>
+                {% for user in group_members_dict[id] %}
+                <tr>
+                    <td>{{user[1]}}</td>
+                    <td>{% if group_members_dict[id]|length != 1 %}<a class="btn" style="color:white"
+                            href="{{url_for('remove_group_member', user = user[0], group = id)}}">Remove</a>{% endif %}
+                    </td>
+                </tr>
+
+                {% endfor %}
+            </table><br>
+            <a class="btn" style="color:white; margin:auto;" href="adduser-popup goes here">Add
+                user</a>
+
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<div id="myModal" class="groupcreation">
+    <div class="groupcreation-content">
+        <span class="close">&times;</span>
+        <h5>Create new group</h5>
+        <form method="POST">
+            {{ groupform.csrf_token() }}
+            <div class="mb-3">
+                {{ groupform.group(class = "form-control") }}
+            </div>
+            <div class="mb-3">
+                <h5>Members</h5>
+                {{ groupform.members(class = "form-control") }}
+            </div>
+            <div class="mb-3 center">
+                {{ groupform.submit(class = "btn") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+</div>
+
+
+
+
+
+<script>
+    // Get the modal
+    var modal = document.getElementById("myModal");
+
+    // Get the button that opens the modal
+    var btn = document.getElementById("myBtn");
+
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+
+    // When the user clicks the button, open the modal 
+    btn.onclick = function () {
+        modal.style.display = "block";
+    }
+
+
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function () {
+        modal.style.display = "none";
+    }
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function (event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
+
 {% endblock %}
