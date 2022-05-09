@@ -1,4 +1,5 @@
-{% extends 'layout.html' %}
+{% extends 'layout.html' %}¨
+{% block title %}{{item.itemname.split('~')[1]}}{% endblock %}
 {% block body %}
 <div class="master-content">
     {% if item.filetype == 'text' %}
@@ -31,7 +32,7 @@
     <h4>Comments</h4>
     <form method="POST">
         {{commentform.csrf_token}}
-        {{commentform.comment}}
+        {{commentform.comment(class = "form-control")}}
         {{commentform.submit(class = "btn")}}
 
 </div>
@@ -40,8 +41,8 @@
 <div class="comment">
     <h5 class="commentuser">{{ comment.username }}</h5>
     <p class="comment-text">{{comment.comment}}</p>
-    {{comment.date}}
-    {% if current_user.id == comment.user_id %}<br>
+    <p>Posted: {{comment.date}}</p>
+    {% if current_user.id == comment.user_id %}
     <a class="btn" href="{{url_for('delcomment', id=comment.id)}}">Delete</a>
     {% endif %}
 </div>
