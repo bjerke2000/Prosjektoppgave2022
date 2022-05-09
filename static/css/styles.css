@@ -373,6 +373,66 @@ nav img {
     opacity: 70%;
 }
 
+.add {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-areas:
+        "file folder";
+        
+}
+
+.add_file {
+    height: 3vw;
+    grid-area: file;
+    border: 1px solid black;
+    background-color: #555555;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.add_file a {
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 15px;
+}
+
+.add_file-grid {
+    grid-gap: 2rem;
+}
+
+.add_file img {
+    margin-top: 0.7rem;
+    height: 2vw;
+    width: 2vw;
+
+}
+
+.add_folder {
+    height: 3vw;
+    grid-area: folder;
+    border: 1px solid black;
+    background-color: #555555;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.add_folder a {
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 15px;
+}
+
+.add_folder-grid {
+    grid-gap: 2rem;
+}
+
+.add_folder img {
+    margin-top: 0.7rem;
+    height: 2vw;
+    width: 2vw;
+
+}
+
 .thumbnail {
     grid-area: icon;
 }

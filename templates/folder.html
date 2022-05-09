@@ -4,14 +4,20 @@
 
 <div class="container">
     <div class="card-grid">
-        <div class="card">
-            <div class="thumbnail">
-            <a href="{{url_for('addfile', path=current_folder.path, parent=current_folder.itemname)}}"><img src="/static/images/uploadfile.png" alt="New item"></a>
+        <div class="add">
+            <a href="{{url_for('addfile', path=current_folder.path, parent=current_folder.itemname)}}">
+            <div class="add_file">
+                <img src="/static/images/file.svg" alt="New item">
             </div>
-            <div class="text_container">
-                <p>New File</p>
+            </a>
+
+            <a href="{{url_for('newfolder', path = current_folder.path, parent=current_folder.itemname)}}">
+            <div class="add_folder">
+                <img src="/static/images/folder.svg" alt="New item">
             </div>
+            </a>
         </div>
+    </div>
         {% for item in contents %}
             <div class="card">
                 <div class="thumbnail">
@@ -31,7 +37,7 @@
                         {% elif item.filetype == 'picture' %}
                             <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/picture.png" alt="Picture"></a>
                         {% elif item.filetype == 'video' %}
-                            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/video.svg" alt="Video"></a>
+                            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/film.svg" alt="Video"></a>
                         {% endif %}
                     {% endif %}
                 </div>
@@ -39,7 +45,7 @@
                 <!-- <div class="text_container"> -->
                     <div class="text_left"> 
                         {% if item.type == 0 %}    
-                        Folder name: {{item.itemname}}
+                        Folder name: {{item.itemname}} <br>
                         {% elif item.type == 1%}
                         File name: {{item.itemname.split("~")[1]}} <br>
                         {% endif %}
