@@ -8,10 +8,6 @@
         {% elif viewing %}
         <li><a class="btn" href="{{url_for('previous', path = current_folder.path)}}">Go back</a></li>
         <li><a class="btn" href="{{url_for('usergroupmanagement')}}">Manage Groups</a></li>
-        {% if folder %}
-        <li><a href="{{url_for('newfolder', path = current_folder.path, parent=current_folder.itemname)}}"
-                class="btn">New Folder</a></li>
-        {% endif %}
         <li><a href="{{url_for('logout')}}" class="btn">Logout</a></li>
 
         {% else %}
