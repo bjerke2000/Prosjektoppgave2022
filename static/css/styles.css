@@ -162,7 +162,7 @@ img {
 }
 
 #navbarlogo {
-    margin-left: 40px;
+    margin-left: 4vw;
 }
 
 #navbarbuttons {
@@ -325,7 +325,7 @@ nav img {
 }
 
 .error {
-    background-color: var(--primary-color);
+    background-color: maroon;
 }
 
 .closebtn {
@@ -517,7 +517,7 @@ th {
 .listcontainer {
     background-color: whitesmoke;
     border: 2px solid black;
-    border-radius: 25px;
+    border-radius: 5px;
     padding: 10px;
     margin: 10px;
     margin-right: 17vw;

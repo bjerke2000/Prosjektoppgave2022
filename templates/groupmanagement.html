@@ -6,21 +6,16 @@
 <link rel="stylesheet" href="/resources/demos/style.css">
 <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
-{% if ',2,' in current_user.groups %}
 <div class="container center">
+    {% if route == 'admin' %}
     <h1>Admin group management</h1>
-    <button id="myBtn" class="btn">
-        <h4>Create new group</h4>
-    </button>
-</div>
-{% else %}
-<div class="container center">
+    {% else %}
     <h1>Group management</h1>
+    {% endif %}
     <button id="myBtn" class="btn">
         <h4>Create new group</h4>
     </button>
 </div>
-{% endif %}
 <br>
 <script>
     $(function () {
@@ -41,7 +36,8 @@
                 <tr>
                     <td>{{user[1]}}</td>
                     <td>{% if group_members_dict[id]|length != 1 %}<a class="btn" style="color:white"
-                            href="{{url_for('remove_group_member', user = user[0], group = id, route = route)}}">Remove</a>{% endif %}
+                            href="{{url_for('remove_group_member', user = user[0], group = id, route = route)}}">Remove</a>{%
+                        endif %}
                     </td>
                 </tr>
 
@@ -75,10 +71,6 @@
 </div>
 
 </div>
-
-
-
-
 
 <script>
     // Get the modal
