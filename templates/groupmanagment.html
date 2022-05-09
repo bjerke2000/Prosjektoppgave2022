@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+{% block title %}Groups{% endblock %}
+{% block body %}
+<div class="container">
+    <ul>
+    {% for id, group in groups_dict.items() %}
+        <li>{{group}}
+            <ul>
+                {% for user in group_members_dict[id] %}¨
+                    <li><a href="{{url_for('remove_group_member', user = user[0], group = id)}}">Remove</a>  {{user[1]}}</li>
+                {% endfor %}
+            </ul>
+        </li>
+    {% endfor %}
+    </ul>
+    Create new group
+    <form method="POST">
+        {{ groupform.csrf_token() }}
+        <div class="mb-3">
+            {{ groupform.group(class = "form-control") }}
+        </div>
+        <div class="mb-3">
+            Members
+            {{ groupform.members(class = "form-control") }}
+        </div>
+        <div class="mb-3">
+            {{ groupform.submit(class = "btn") }}
+        </div>
+    </form>
+</div>
+{% endblock %}

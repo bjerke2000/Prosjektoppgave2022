@@ -1,3 +1,5 @@
+from ast import Sub
+from tokenize import String
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FileField, DateField, SelectMultipleField, SelectField
 from wtforms.validators import DataRequired, EqualTo, Length, Email
@@ -124,3 +126,12 @@ class CommentForm(FlaskForm):
     )
     submit = SubmitField('Post')
 
+class GroupForm(FlaskForm):
+    group = StringField('Group name',
+    validators=[DataRequired(), Length(max=50)],
+    render_kw={'placeholder':'Groupname...'}
+    )
+    members = SelectMultipleField('Group members',
+    coerce=int
+    )
+    submit = SubmitField('Create Group')

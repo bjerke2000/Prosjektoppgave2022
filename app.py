@@ -226,6 +226,11 @@ def DeleteTag(id): #Deletes Tags and removes tag from all affected items
     db.session.delete(tag)
     db.session.commit()
 
+def DeleteGroupMember(user, group):
+    user_object = UserModel.query.filter_by(id = user).first()
+    user_object.groups = user_object.groups.replace(f',{group},',',')
+    db.session.commit()
+
 def AdminTest():
     if str(ADMINGROUP) in current_user.groups.split(','):
         return True
@@ -259,8 +264,34 @@ def ItemInfoLoader(item, isitemroute=False):
         elif type in video_types:
                 item.filetype = 'video'
     return item
-    
 
+def GroupManagerLoader(groups):
+    groupform = GroupForm()
+    members = [(u.id, u.name) for u in UserModel.query.order_by('name')] #Exclude first value since it is root user
+    members.remove((1,'root'))#Removes root user from list
+    members.remove((DELETED_USER,'[DELETED USER]')) #Removes Deleted user from list 
+    if groupform.validate_on_submit():
+        newgroup = GroupModel(
+            group = groupform.group.data
+        )
+        db.session.add(newgroup)
+        for users in groupform.members.data:
+            user = UserModel.query.filter_by(id = users).first()
+            user.groups = user.groups + str(GroupModel.query.filter_by(group = groupform.group.data).first().id) +','
+        db.session.commit()
+        return True
+    groupform.members.choices = members
+    groups_dict = {}
+    group_members_dict={}
+    for id in groups.split(',')[1:-1]:
+        groups_dict[id] = GroupModel.query.filter_by(id = int(id)).first().group
+    users = UserModel.query.all()
+    for group in groups_dict.keys():
+        group_members_dict[group]=[]
+        for user in users:
+            if group in user.groups.split(',')[1:-1]:
+                group_members_dict[group].append((user.id, user.name))
+    return group_members_dict, groupform, groups_dict
 #===========================ROUTES======================================
 
 # index redirects to login
@@ -300,7 +331,7 @@ def logout():
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
-    groups = [(g.id, g.name) for g in GroupModel.query.order_by('group')][2:] #Exclude first two values since they are admin and all users
+    groups = [(g.id, g.group) for g in GroupModel.query.order_by('group')][2:] #Exclude first two values since they are admin and all users
     form.groups.choices = groups
     if form.validate_on_submit():
         user = UserModel.query.filter_by(email=form.email.data).first()
@@ -308,7 +339,7 @@ def register():
             hashed_pw = generate_password_hash(form.password.data, 'sha256')
             grouplist = form.groups.data
             grouplist.append(ALLUSERSGROUP)  # adds all users group
-            group_str = str(grouplist).strip("[]")
+            group_str = ',' + str(grouplist).strip("[]") + ','
             user = UserModel(name=form.name.data,
                              email=form.email.data,
                              password_hash=hashed_pw,
@@ -356,6 +387,7 @@ def item(path, name):
                     ItemInfoLoader(items)
                     contents.append(items)
             return render_template('folder.html', contents = contents, current_folder = item, viewing=True, folder=True, path = path, admin = AdminTest())
+
         case 1: #Show contents if file
             path = item.path.replace('-','/')+item.itemname.split('~')[1]
             ItemInfoLoader(item, True)
@@ -485,10 +517,37 @@ def admin_delete(table, id):
                 #flash(f'Comment succesfully deleted', 'success')
         return redirect(url_for('admin'))
     return redirect(url_for('index'))
-
-
     
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    groups_dict = {}
+    for id in current_user.groups:
+        groups_dict[id] = GroupModel.query.filter_by(id = id).first().group
+    return render_template('dashboard.html', groups_dict = groups_dict)
 
+@app.route('/usergroupmanagment', methods=['POST','GET'])
+@login_required
+def usergroupmanagment(): #Shows groups that user is apart of
+    info = GroupManagerLoader(current_user.groups)
+    return render_template('groupmanagment.html', groups_dict = info[2], group_members_dict = info[0], groupform = info[1])
+
+@app.route('/admingroupmanagment', methods=['POST','GET'])
+@login_required
+def admingroupmanagment(): #Shows all groups
+    if AdminTest():
+        groups = ','
+        for group in GroupModel.query.all():
+            groups = groups + str(group.id)+','
+        info = GroupManagerLoader(groups)
+        return render_template('groupmanagment.html', groups_dict = info[2], group_members_dict = info[0], groupform = info[1])
+    return redirect(url_for('item', path = 'root', name = '-'))
+
+@app.route('/remove_group_member/<int:user>/<int:group>')
+@login_required
+def remove_group_member(user, group):
+    DeleteGroupMember(user, group)
+    return redirect(url_for('groupmanagment'))
 
 #På bunnj
 if __name__ == "__main__":
