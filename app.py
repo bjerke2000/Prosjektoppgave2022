@@ -266,7 +266,6 @@ def ItemInfoLoader(item, isitemroute=False):
 def GroupManagerLoader(groups):
     groups_dict = {}
     group_members_dict={}
-
     for id in groups.split(',')[1:-1]:
         groups_dict[id] = GroupModel.query.filter_by(id = int(id)).first().group
     users = UserModel.query.all()
@@ -281,7 +280,7 @@ def GroupTupleManager():
     groups = [(g.id, g.group) for g in GroupModel.query.order_by('group')][2:] #Exclude first two values since they are admin and all users
     final_group = []
     for group in groups:
-        if current_user.is_authenticated():
+        if current_user.is_authenticated:
             for g in current_user.groups.split(',')[1:-1]:
                 if g == str(group[0]):
                     final_group.append(group)
@@ -289,6 +288,18 @@ def GroupTupleManager():
             final_group.append(group)
     return(final_group)
 
+def NewGroup(groupname, members):
+        newgroup = GroupModel(
+            group = groupname
+        )
+        db.session.add(newgroup)
+        membersdata = members.split(',')
+        if current_user.email not in members:
+            membersdata.append(current_user.id)
+        for email in membersdata:
+            user = UserModel.query.filter_by(email = email).first()
+            user.groups = user.groups + str(GroupModel.query.filter_by(group = groupname).first().id) +','
+        db.session.commit()
 
 #===========================ROUTES======================================
 
@@ -376,7 +387,7 @@ def item(path, name):
         return redirect(url_for('previous', path=path))
     match item.type:
         case 0:#Show contents of folder
-            path = item.path.replace('-','/')+item.itemname
+            path = item.path.replace('-','/')[4:]+item.itemname.replace('-','/')
             unchecked_contents = ItemModel.query.filter_by(path = f"{item.path}{item.itemname.strip('-').split('~')[0]}-")
             contents = []
             for items in unchecked_contents:
@@ -386,7 +397,7 @@ def item(path, name):
             return render_template('folder.html', contents = contents, current_folder = item, viewing=True, folder=True, path = path, admin = AdminTest())
 
         case 1: #Show contents if file
-            path = item.path.replace('-','/')+item.itemname.split('~')[1]
+            path = item.path.replace('-','/')[4:]+item.itemname.split('~')[1]
             ItemInfoLoader(item, True)
             if item.filetype == '':
                 flash('Not able to open file')
@@ -534,17 +545,7 @@ def usergroupmanagement(): #Shows groups that user is apart of
     groupform.members.choices = members
     if groupform.validate_on_submit():
         if GroupModel.query.filter_by(group = groupform.group.data).first() is None:
-            newgroup = GroupModel(
-                group = groupform.group.data
-            )
-            db.session.add(newgroup)
-            membersdata = groupform.members.data
-            if current_user.id not in membersdata:
-                membersdata.append(current_user.id)
-            for users in membersdata:
-                user = UserModel.query.filter_by(id = users).first()
-                user.groups = user.groups + str(GroupModel.query.filter_by(group = groupform.group.data).first().id) +','
-            db.session.commit()
+            NewGroup(groupform.group.data, groupform.members.data)
             return redirect(url_for('usergroupmanagement'))
         else:
             flash('Group already exists', 'error')
@@ -560,26 +561,12 @@ def admingroupmanagement(): #Shows all groups
         for group in GroupModel.query.all():
             groups = groups + str(group.id)+','
         info = GroupManagerLoader(groups)
-        members = [(u.id, u.name) for u in UserModel.query.order_by('name')] #Exclude first value since it is root user
-        members.remove((1,'root'))#Removes root user from list
-        members.remove((DELETED_USER,'[DELETED USER]')) #Removes Deleted user from list 
-        groupform.members.choices = members
         if groupform.validate_on_submit():
             if GroupModel.query.filter_by(group = groupform.group.data).first() is None:
-                newgroup = GroupModel(
-                    group = groupform.group.data
-                )
-                db.session.add(newgroup)
-                membersdata = groupform.members.data
-                if current_user.id not in membersdata:
-                    membersdata.append(current_user.id)
-                for users in membersdata:
-                    user = UserModel.query.filter_by(id = users).first()
-                    user.groups = user.groups + str(GroupModel.query.filter_by(group = groupform.group.data).first().id) +','
-                db.session.commit()
+                NewGroup(groupform.group.data, groupform.members.data)
                 return redirect(url_for('admingroupmanagement'))
-        else:
-            flash('Group already exists', 'error')
+            else:
+                flash('Group already exists', 'error')
         return render_template('groupmanagement.html', groups_dict = info[1], group_members_dict = info[0], groupform = groupform, route='admin')
     return redirect(url_for('item', path = 'root', name = '-'))
 

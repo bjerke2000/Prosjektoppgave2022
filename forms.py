@@ -131,16 +131,16 @@ class GroupForm(FlaskForm):
     validators=[DataRequired(), Length(max=50)],
     render_kw={'placeholder':'Groupname...'}
     )
-    members = SelectMultipleField(
-        'Group members',
-    coerce=int
+    members = StringField('Member email',
+        validators=[Length(max=500)],
+        render_kw={'placeholder':'emails separated by ","'}
     )
     submit = SubmitField('Create Group')
 
 class AddUserToGroupForm(FlaskForm):
     groupid = HiddenField('group_id')
-    members = SelectMultipleField(
-        'Group members',
-    coerce=int
+    members = StringField('Member email',
+        validators=[Length(max=500)],
+        render_kw={'placeholder':'emails separated by ","'}
     )
     submit = SubmitField('Create Group')
