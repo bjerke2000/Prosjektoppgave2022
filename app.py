@@ -266,6 +266,7 @@ def ItemInfoLoader(item, isitemroute=False):
 def GroupManagerLoader(groups):
     groups_dict = {}
     group_members_dict={}
+
     for id in groups.split(',')[1:-1]:
         groups_dict[id] = GroupModel.query.filter_by(id = int(id)).first().group
     users = UserModel.query.all()
@@ -280,9 +281,12 @@ def GroupTupleManager():
     groups = [(g.id, g.group) for g in GroupModel.query.order_by('group')][2:] #Exclude first two values since they are admin and all users
     final_group = []
     for group in groups:
-        for g in current_user.groups.split(',')[1:-1]:
-            if g == str(group[0]):
-                final_group.append(group)
+        if current_user.is_authenticated():
+            for g in current_user.groups.split(',')[1:-1]:
+                if g == str(group[0]):
+                    final_group.append(group)
+        else:
+            final_group.append(group)
     return(final_group)
 
 
@@ -551,6 +555,7 @@ def usergroupmanagement(): #Shows groups that user is apart of
 def admingroupmanagement(): #Shows all groups
     if AdminTest():
         groupform = GroupForm()
+        groupuserform = AddUserToGroupForm()
         groups = ','
         for group in GroupModel.query.all():
             groups = groups + str(group.id)+','
