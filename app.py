@@ -51,7 +51,7 @@ db = SQLAlchemy(app)
 
 
 class UserModel(db.Model, UserMixin):
-    __tablename__ = 'users'
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)  # "Auto Increment"
     name = db.Column(db.String(150), nullable=False)  # "Ola Normann"
     email = db.Column(db.String(150), nullable=False,
@@ -85,7 +85,7 @@ class UserModel(db.Model, UserMixin):
         check_password_hash(self.password_hash, password)
 
 class GroupModel(db.Model):
-    __tablename__ = 'groups'
+    __tablename__ = 'group'
     id = db.Column(db.Integer, primary_key=True)
     group = db.Column(db.String(150), nullable=False,
                       unique=True)  # unike gruppenavn
@@ -94,7 +94,7 @@ class GroupModel(db.Model):
         self.group = group
 
 class ItemModel(db.Model):
-    __tablename__ = 'items'
+    __tablename__ = 'item'
     id = db.Column(db.Integer, primary_key=True)
     itemname = db.Column(db.String(250), nullable = False) #"filnavn(.filtype om fil)~uuid"
     owner = db.Column(db.Integer, db.ForeignKey('users.id')) #fk til users id
@@ -113,7 +113,7 @@ class ItemModel(db.Model):
     named_tags =''
 
 class CommentsModel(db.Model):
-    __tablename__ = 'comments'
+    __tablename__ = 'comment'
     id = db.Column(db.Integer, primary_key = True)
     item_id = db.Column(db.Integer, db.ForeignKey('items.id'))#fk to Items id, that has the comment section.
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))#fk to users id, to know who made the comment
@@ -122,7 +122,7 @@ class CommentsModel(db.Model):
     username = ''
 
 class TagModel(db.Model):
-    __tablename__ = 'tags'
+    __tablename__ = 'tag'
     id = db.Column(db.Integer, primary_key=True)
     # name of tag f.ex: Documentation
     tag = db.Column(db.String(50), nullable=False)
@@ -549,7 +549,7 @@ def usergroupmanagement(): #Shows groups that user is apart of
             return redirect(url_for('usergroupmanagement'))
         else:
             flash('Group already exists', 'error')
-    return render_template('groupmanagement.html', groups_dict = info[1], group_members_dict = info[0], groupform = groupform, route='user')
+    return render_template('groupmanagement.html', groups_dict = info[1], group_members_dict = info[0], groupform = groupform, route='user', admin = AdminTest())
 
 @app.route('/admingroupmanagement', methods=['POST','GET'])
 @login_required
@@ -567,7 +567,7 @@ def admingroupmanagement(): #Shows all groups
                 return redirect(url_for('admingroupmanagement'))
             else:
                 flash('Group already exists', 'error')
-        return render_template('groupmanagement.html', groups_dict = info[1], group_members_dict = info[0], groupform = groupform, route='admin')
+        return render_template('groupmanagement.html', groups_dict = info[1], group_members_dict = info[0], groupform = groupform, route='admin', admin = AdminTest())
     return redirect(url_for('item', path = 'root', name = '-'))
 
 @app.route('/remove_group_member/<int:user>/<int:group>/<string:route>')
@@ -575,6 +575,12 @@ def admingroupmanagement(): #Shows all groups
 def remove_group_member(user, group, route):
     DeleteGroupMember(user, group)
     return redirect(url_for(f'{route}groupmanagement'))
+
+@app.route('/edit/<string:path>/<string:name>', methods=['GET','POST'])
+@login_required
+def edit(path, name):
+    form = EditFileForm()
+    item = ItemModel.query.filter_by(path=path, itemname=name).first()
 
 #På bunnj
 if __name__ == "__main__":
