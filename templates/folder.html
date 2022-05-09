@@ -27,11 +27,11 @@
 
                     {% elif item.type == 1 %}
                         {% if item.filetype == 'text' %}
-                            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/Text.png" alt="Text"></a>
+                            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/text.png" alt="Text"></a>
                         {% elif item.filetype == 'picture' %}
-                            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/imagefile.png" alt="Picture"></a>
+                            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/picture.png" alt="Picture"></a>
                         {% elif item.filetype == 'video' %}
-                            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/Video.png" alt="Video"></a>
+                            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/video.svg" alt="Video"></a>
                         {% endif %}
                     {% endif %}
                 </div>
