@@ -97,6 +97,7 @@
             <th>comment</th>
         </tr>
         {% for comment in comments %}
+        {# if comment.deleted == 0 #}
         <tr>
             <td><a class="btn" href="{{url_for('admin_delete', table='comments', id = comment.id)}}">Delete</a></td>
             <td>{{comment.id}}</td>
@@ -106,6 +107,20 @@
             <td>{{comment.date}}</td>
             <td>{{comment.comment}}</td>
         </tr>
+        {# endif #}
+        {% endfor %}
+        {% for comment in comments %}
+        {# if comment.deleted == 1 #}
+        <tr>
+            <td><a class="btn" href="{{url_for('admin_delete', table='comments', id = comment.id)}}">Delete</a></td>
+            <td>{{comment.id}}</td>
+            <td>{{comment.item_id}}</td>
+            <td>{{comment.user_id}}</td>
+            <td>{{comment.username}}</td>
+            <td>{{comment.date}}</td>
+            <td>{{comment.comment}}</td>
+        </tr>
+        {# endif #}
         {% endfor %}
     </table>
 
