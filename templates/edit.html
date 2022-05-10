@@ -7,6 +7,11 @@
         <h1 class="mb-3">New File</h1>
         <form method="POST">
             {{ form.csrf_token() }}
+            {% if text %}
+            <div class="mb-3">
+                {{ form.text(class = "form-control", rows="40"|safe) }}
+            </div>
+            {% endif %}
             <div class="mb-3">
                 {{ form.tags(class = "form-control") }}
             </div>

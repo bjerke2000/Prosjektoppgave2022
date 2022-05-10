@@ -185,12 +185,14 @@ def PermissionCreator(form, group_priv_dict={}): #Makes priv dictionairy from in
         group_priv_dict[group] = "r"
     for group in form.rw_groups.data:
         group_priv_dict[group] = "rw"
+    for group in group_priv_dict.keys():
+        if group not in form.rw_groups.data and group not in form.r_groups.data:
+            group_priv_dict[group]='none'
     match form.private.data:
         case 0:
             group_priv_dict[ALLUSERSGROUP] = 'r'
         case 1:
-            group_priv_dict[ALLUSERSGROUP] = 'DELETION'
-            group_priv_dict.pop(ALLUSERSGROUP)
+            group_priv_dict[ALLUSERSGROUP] = 'none'
     return group_priv_dict
 
 def GetAvaliableName_helper(path, name):#Starts GetAvaliableName
@@ -295,7 +297,7 @@ def ItemInfoLoader(item, isitemroute=False):
         if priv != 'none':
             item.groups += item.groups + GroupModel.query.filter_by(id = group).first().group + ','
     item.groups = item.groups[:-1]
-    if ALLUSERSGROUP in item.group_privs:
+    if item.group_privs[ALLUSERSGROUP] != 'none':
         item.private = 0
     else:
         item.private = 1
@@ -634,13 +636,27 @@ def remove_group_member(user, group, route):
 @login_required
 def edit(path, name):
     item = ItemModel.query.filter_by(path=path, itemname=name).first()
-    ItemInfoLoader(item)
     groups = GroupTupleManager()
-    object = EditFileFormLoader(item.named_tags, list(item.group_privs.keys()) , item.private)
-    form = EditFileForm(obj=object)
+    if item.itemname.split('.')[-1] in ['txt']:
+        ItemInfoLoader(item, True)
+        object = EditTextFileFormLoader(item.content, item.named_tags, list(item.group_privs.keys()) , item.private)
+        form = EditTextFileForm(obj=object)
+        text = True
+    else:
+        ItemInfoLoader(item)
+        object = EditFileFormLoader(item.named_tags, list(item.group_privs.keys()) , item.private)
+        form = EditFileForm(obj=object)
+        text = False
     form.r_groups.choices = groups
     form.rw_groups.choices = groups
-    return render_template('edit.html', form = form, item=item)
+    if form.validate_on_submit():
+        item.tags = TagManager(form.tags.data)
+        item.group_privs = PermissionCreator(form, item.group_privs)
+        item.edited_date = datetime.now()
+        db.session.commit()
+        flash('Changes Saved', 'success')
+        return redirect(url_for('item', path=item.path, name=item.itemname))
+    return render_template('edit.html', form = form, item=item, text = text)
 
 #På bunnj
 if __name__ == "__main__":
