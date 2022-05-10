@@ -1,51 +1,65 @@
 {% extends 'layout.html' %}¨
 {% block title %}{{item.itemname.split('~')[1]}}{% endblock %}
 {% block body %}
-<div class="master-content">
-    {% if item.filetype == 'text' %}
-    <div class="textcontent">
-        {% for line in item.content %}
-        <p>{{line}}</p>
+<div class="fileshowcase">
+    <div class="master-content">
+        {% if item.filetype == 'text' %}
+        <div class="textcontent">
+            {% for line in item.content %}
+            <p>{{line}}</p>
 
-        {% endfor %}
-    </div>
-    {% elif item.filetype == 'picture' %}
-    <div class="mediacontent">
-        <img src="/static/content/{{item.itemname}}" alt="{{item.itemname}}">
-    </div>
-    {% elif item.filetype == 'video' %}
-    <div class="mediacontent">
-        <video class="videoplayer" controls>
+            {% endfor %}
+        </div>
+        {% elif item.filetype == 'picture' %}
+        <img class="mediacontent" src="/static/content/{{item.itemname}}" alt="{{item.itemname}}">
+        {% elif item.filetype == 'video' %}
+        <video class="videoplayer mediacontent" controls>
             <source src="/static/content/{{item.itemname}}" type="video/{{item.itemname.split('~')[1].split('.')[-1]}}">
             Your browser does not support the video tag.
         </video>
+        {% endif %}
+        <div class="sidebar">
+            <p>Filename: {{ item.itemname.split('~')[1] }} </p>
+            <p>Path: {{item.path}} </p>
+            <p>Uploaded by: {#item.ownername#}</a>
+            <p>Created: {{item.post_date}}</p>
+            <p>Updated:{{item.edited_date}}</p>
+            <p>Views: {{item.hitcount}}</p>
+            <p>Description:</p>
+            {% if item.description != None %}
+            <p>{{item.description}}</p>
+            {% else %}
+            <p>This file has no description...</p>
+            {% endif %}
+            <a class="btn" style="margin: 15px;"
+                href="{{url_for('edit', path = item.path, name = item.itemname )}}">Edit</a>
+            <a class="btn redbg" onclick="return confirm('Are you sure you want to delete this file?');"
+                style="margin:15px;" href="#">Delete</a>
+        </div>
     </div>
-    {% endif %}
-    <div class="sidebar">
-        <p>Filename: {{item.path}}{{ item.itemname.split('~')[1] }} </p>
-        <p>Uploaded by: {#item.ownername#}</a>
-        <p>Created: {{item.post_date}}</p>
-        <p>Updated:{{item.edited_date}}</p>
-        <a href="{{url_for('edit', path = item.path, name = item.itemname )}}">edit</a>
-    </div>
-</div>
-<div class="comments">
-    <h4>Comments</h4>
-    <form method="POST">
-        {{commentform.csrf_token}}
-        {{commentform.comment(class = "form-control")}}
-        {{commentform.submit(class = "btn")}}
+    <div class="comment">
+        <h4>Write a comment...</h4>
+        <form method="POST">
+            {{commentform.csrf_token}}
+            {{commentform.comment(class = "form-control")}}
+            {{commentform.submit(class = "btn")}}
 
+    </div>
+    </form>
+    <div class="commentsection">
+        <h4>Comments({{comment_amount}})</h4>
+        {% for comment in comments %}
+        <div class="comments">
+            <h5 class="commentuser">Comment by {{ comment.username }}:</h5>
+            <p class="comment-text">{{comment.comment}}</p>
+            <p>Posted: {{comment.date}}</p>
+            {% if current_user.id == comment.user_id %}
+            <a class="btn redbg" href="{{url_for('delcomment', id=comment.id)}}"
+                onclick="return confirm('Are you sure you want to delete your comment?');">Delete</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
 </div>
-</form>
-{% for comment in comments %}
-<div class="comment">
-    <h5 class="commentuser">{{ comment.username }}</h5>
-    <p class="comment-text">{{comment.comment}}</p>
-    <p>Posted: {{comment.date}}</p>
-    {% if current_user.id == comment.user_id %}
-    <a class="btn" href="{{url_for('delcomment', id=comment.id)}}">Delete</a>
-    {% endif %}
-</div>
-{% endfor %}
+
 {% endblock %}
