@@ -449,6 +449,7 @@ nav img {
 
 .thumbnail {
     grid-area: icon;
+    border-right: 1px dotted gray;
 }
 
 .text_container {
@@ -457,10 +458,29 @@ nav img {
 
 .text_left {
     grid-area: name;
+    padding-left: 1rem;
 }
 
 .tags {
     grid-area: tags;
+    display: grid;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto ;
+    grid-template-areas:
+        "t1 t2 t3 t4 t5 t6 t7 t8 t9 10";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    padding-bottom: 0.3rem;
+}
+
+.tag {
+    margin-left: 1rem;
+    border: 1px solid lightgray;
+    border-radius: 4px;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    background-color: #666666;
+    font-family: monospace
 }
 
 .text_right {
