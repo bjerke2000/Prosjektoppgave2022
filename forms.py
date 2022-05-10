@@ -4,6 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FileField, DateField, SelectMultipleField, SelectField, HiddenField
 from wtforms.validators import DataRequired, EqualTo, Length, Email
 from flask_wtf.file import FileField, FileAllowed, FileRequired
+from wtforms.widgets import TextArea
 
 ADMINGROUP=2
 ALLUSERSGROUP=1
@@ -124,6 +125,38 @@ class EditFileFormLoader():
         self.private = private
 
 class EditFileForm(FlaskForm):
+    tags = StringField(
+        'Tags', 
+        validators=[Length(max=50)]
+        )
+    r_groups = SelectMultipleField(
+        "Groups with read Privilages",
+        coerce=int
+    )
+    rw_groups = SelectMultipleField(
+        "Groups with read and write Privilages",
+        coerce=int
+    )
+    private = SelectField(
+        "Private",
+        choices=[(0,"Public"),(1,"Private")],
+        coerce=int
+    )
+    submit = SubmitField('Save')
+
+class EditTextFileFormLoader():
+    def __init__(self,lines,named_tags, groups, private) -> None:
+        self.text = lines
+        self.tags = named_tags
+        self.r_groups = groups
+        self.rw_groups = groups
+        self.private = private
+
+class EditTextFileForm(FlaskForm):
+    text = StringField('Textarea',
+    widget=TextArea(),
+    render_kw={'resize':'none'}
+    )
     tags = StringField(
         'Tags', 
         validators=[Length(max=50)]
