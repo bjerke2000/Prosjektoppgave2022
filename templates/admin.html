@@ -13,7 +13,8 @@
         </tr>
         {% for user in users %}
         <tr>
-            <td><a class="btn" href="{{url_for('admin_delete', table='users', id = user.id )}}">Delete</a></td>
+            <td><a class="btn" onclick="return confirm('Are you sure you want to delete this user?');"
+                    href="{{url_for('admin_delete', table='users', id = user.id )}}">Delete</a></td>
             <td>{{user.id}}</td>
             <td>{{user.name}}</td>
             <td>{{user.email}}</td>
@@ -22,7 +23,6 @@
         </tr>
         {% endfor %}
     </table>
-
 
 </div>
 
@@ -66,7 +66,8 @@
         </tr>
         {% for item in items %}
         <tr>
-            <td><a class="btn" href="{{url_for('admin_delete', table='items', id = item.id)}}">Delete</a></td>
+            <td><a class="btn" onclick="return confirm('Are you sure you want to delete this item?');"
+                    href="{{url_for('admin_delete', table='items', id = item.id)}}">Delete</a></td>
             <td><a class="btn" href="{{url_for('item', path = item.path, name = item.itemname)}}">Go to</a></td>
             <td>{{item.id}}</td>
             <td>{{item.itemname}}</td>
@@ -99,7 +100,8 @@
         {% for comment in comments %}
         {# if comment.deleted == 0 #}
         <tr>
-            <td><a class="btn" href="{{url_for('admin_delete', table='comments', id = comment.id)}}">Delete</a></td>
+            <td><a class="btn" onclick="return confirm('Are you sure you want to delete this comment?');"
+                    href="{{url_for('admin_delete', table='comments', id = comment.id)}}">Delete</a></td>
             <td>{{comment.id}}</td>
             <td>{{comment.item_id}}</td>
             <td>{{comment.user_id}}</td>
@@ -112,7 +114,8 @@
         {% for comment in comments %}
         {# if comment.deleted == 1 #}
         <tr>
-            <td><a class="btn" href="{{url_for('admin_delete', table='comments', id = comment.id)}}">Delete</a></td>
+            <td><a class="btn" onclick="return confirm('Are you sure you want to permanently delete this comment?');"
+                    href="{{url_for('admin_delete', table='comments', id = comment.id)}}">Delete</a></td>
             <td>{{comment.id}}</td>
             <td>{{comment.item_id}}</td>
             <td>{{comment.user_id}}</td>
@@ -139,11 +142,13 @@
         </tr>
         {% for tag in tags %}
         <tr>
-            <td><a class="btn" href="{{url_for('admin_delete', table='tags', id = tag.id)}}">Delete</a></td>
+            <td><a class="btn" onclick="return confirm('Are you sure you want to delete this tag?');"
+                    href="{{url_for('admin_delete', table='tags', id = tag.id)}}">Delete</a></td>
             <td>{{tag.id}}</td>
             <td>{{tag.tag}}</td>
         </tr>
         {% endfor %}
     </table>
 </div>
+
 {% endblock %}

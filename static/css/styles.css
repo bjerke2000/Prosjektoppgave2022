@@ -58,7 +58,7 @@ img {
 .master-content {
     display: flex;
     justify-content: center;
-    margin-left: 10%;
+    margin-left: 12vw;
 }
 
 
@@ -128,7 +128,7 @@ img {
 
 .sidebar {
     height: 30%;
-    width: 10%;
+    width: 10vw;
     background-color: #f4f4f4;
     border-radius: 25px;
     display: inline-block;
@@ -355,7 +355,7 @@ nav img {
 .card {
     display: grid;
     width: 100%;
-    grid-template-columns: 20rem auto auto 25rem;
+    grid-template-columns: 10rem auto auto 14rem;
     grid-template-areas:
         "icon name tags owner_edit";
     border: 1px solid black;
@@ -378,7 +378,7 @@ nav img {
     grid-template-columns: auto auto;
     grid-template-areas:
         "file folder";
-        
+
 }
 
 .add_file {
@@ -481,6 +481,12 @@ nav img {
     margin: auto;
 }
 
+.itemshowcase {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 
 /* Modal Content */
 .groupcreation-content {
@@ -507,6 +513,12 @@ nav img {
 
 .center {
     text-align: center;
+}
+
+.centerelement {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .redbg {

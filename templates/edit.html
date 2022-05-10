@@ -4,17 +4,37 @@
 {% block body %}
 <div class="container">
     <div class="inputform">
-        <h1 class="mb-3">New File</h1>
+        {% if item.filetype == 'text' %}
+        <div class="textcontent centerelement">
+            {% for line in item.content %}
+            <p>{{line}}</p>
+            {% endfor %}
+        </div>
+        {% elif item.filetype == 'picture' %}
+        <div class="mediacontent centerelement">
+            <img src="/static/content/{{item.itemname}}" alt="{{item.itemname}}">
+        </div>
+        {% elif item.filetype == 'video' %}
+        <div class="mediacontent centerelement">
+            <video class="videoplayer" controls>
+                <source src="/static/content/{{item.itemname}}"
+                    type="video/{{item.itemname.split('~')[1].split('.')[-1]}}">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        {% endif %}
+        <h1 class="mb-3">Edit file</h1>
         <form method="POST">
             {{ form.csrf_token() }}
+            <p>Change tags:</p>
             <div class="mb-3">
                 {{ form.tags(class = "form-control") }}
             </div>
-            <p>r_groups</p>
+            <p>Read:</p>
             <div class="mb-3">
                 {{ form.r_groups(class = "form-control") }}
             </div>
-            <p>rw_groups</p>
+            <p>Read/Write:</p>
             <div class="mb-3">
                 {{ form.rw_groups(class = "form-control") }}
             </div>
@@ -23,6 +43,8 @@
             </div>
             <div class="mb-3">
                 {{ form.submit(class = "btn") }}
+                <a class="btn redbg" style="float: right;"
+                    href="{{url_for('item', path=item.path, name=item.itemname)}}">Cancel</a>
             </div>
         </form>
     </div>
