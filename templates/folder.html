@@ -42,7 +42,6 @@
                     {% endif %}
                 </div>
                 
-                <!-- <div class="text_container"> -->
                     <div class="text_left"> 
                         {% if item.type == 0 %}    
                         Folder name: {{item.itemname}} <br>
@@ -58,12 +57,11 @@
                     </div>
                     {% if item.type == 1 %}
                     <div class="tags">
-                        {% for tag in item.tags.split(",") %}
-                        Tags:{{item.tags}}
+                        {% for tag in item.named_tags.split(",")[:10] %}
+                        <div class="tag">{{tag}}</div>
                         {% endfor %}
                     </div>
                     {% endif %}
-                <!-- </div> -->
             </div>
         {% endfor %}
     </div>

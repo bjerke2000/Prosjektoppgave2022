@@ -355,7 +355,7 @@ nav img {
 .card {
     display: grid;
     width: 100%;
-    grid-template-columns: 20rem auto auto 25rem;
+    grid-template-columns: 11rem 25rem auto 14rem;
     grid-template-areas:
         "icon name tags owner_edit";
     border: 1px solid black;
@@ -435,6 +435,7 @@ nav img {
 
 .thumbnail {
     grid-area: icon;
+    border-right: 1px dotted gray;
 }
 
 .text_container {
@@ -443,10 +444,22 @@ nav img {
 
 .text_left {
     grid-area: name;
+    padding-left: 1rem;
 }
 
 .tags {
     grid-area: tags;
+    display: grid;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto ;
+    grid-template-areas:
+        "t1 t2 t3 t4 t5 t6 t7 t8 t9 10";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
+.tag {
+    margin-left: 1rem;
 }
 
 .text_right {
