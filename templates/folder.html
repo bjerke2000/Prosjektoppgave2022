@@ -6,64 +6,69 @@
     <div class="card-grid">
         <div class="add">
             <a href="{{url_for('addfile', path=current_folder.path, parent=current_folder.itemname)}}">
-            <div class="add_file">
-                <img src="/static/images/file.svg" alt="New item">
-            </div>
+                <div class="add_file">
+                    <img src="/static/images/file.svg" alt="New item">
+                </div>
             </a>
 
             <a href="{{url_for('newfolder', path = current_folder.path, parent=current_folder.itemname)}}">
-            <div class="add_folder">
-                <img src="/static/images/folder.svg" alt="New item">
-            </div>
+                <div class="add_folder">
+                    <img src="/static/images/folder.svg" alt="New item">
+                </div>
             </a>
         </div>
     </div>
-        {% for item in contents %}
-            <div class="card">
-                <div class="thumbnail">
-                    {% if item.type == 0 %}
-                        {% if item.private == 1 %}
-                        
-                        <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img
-                                src="/static/images/privatefolder.png" alt="Private Folder"></a>
-                        {% elif item.private == 0 %}
-                        <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/folder.png"
-                                alt="Folder"></a>
-                        {% endif %}
+    {% for item in contents %}
+    <div class="card">
+        <div class="thumbnail">
+            {% if item.type == 0 %}
+            {% if item.private == 1 %}
 
-                    {% elif item.type == 1 %}
-                        {% if item.filetype == 'text' %}
-                            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/text.png" alt="Text"></a>
-                        {% elif item.filetype == 'picture' %}
-                            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/picture.png" alt="Picture"></a>
-                        {% elif item.filetype == 'video' %}
-                            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/film.svg" alt="Video"></a>
-                        {% endif %}
-                    {% endif %}
-                </div>
-                
-                    <div class="text_left"> 
-                        {% if item.type == 0 %}    
-                        Folder name: {{item.itemname}} <br>
-                        {% elif item.type == 1%}
-                        File name: {{item.itemname.split("~")[1]}} <br>
-                        {% endif %}
-                        Owner: {{item.ownername}} <br>
-                        Last edited: {{item.edited_date}} <br>
-                    </div>
-                    <div class="text_right">
-                        Posted: {{item.post_date}} <br>
-                        Group: {{item.groups}} <br>
-                    </div>
-                    {% if item.type == 1 %}
-                    <div class="tags">
-                        {% for tag in item.named_tags.split(",")[:10] %}
-                        <div class="tag">{{tag}}</div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-            </div>
-        {% endfor %}
+            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img
+                    src="/static/images/privatefolder.png" alt="Private Folder"></a>
+            {% elif item.private == 0 %}
+            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/folder.png"
+                    alt="Folder"></a>
+            {% endif %}
+
+            {% elif item.type == 1 %}
+            {% if item.filetype == 'text' %}
+            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/text.png"
+                    alt="Text"></a>
+            {% elif item.filetype == 'picture' %}
+            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/picture.png"
+                    alt="Picture"></a>
+            {% elif item.filetype == 'video' %}
+            <a href="{{url_for('item', path = item.path, name = item.itemname)}}"><img src="/static/images/film.svg"
+                    alt="Video"></a>
+            {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- <div class="text_container"> -->
+        <div class="text_left">
+            {% if item.type == 0 %}
+            Folder name: {{item.itemname}} <br>
+            {% elif item.type == 1%}
+            File name: {{item.itemname.split("~")[1]}} <br>
+            {% endif %}
+            Owner: {{item.ownername}} <br>
+            Last edited: {{item.edited_date}} <br>
+        </div>
+        <div class="text_right">
+            Posted: {{item.post_date}} <br>
+            Group: {{item.groups}} <br>
+        </div>
+        {% if item.type == 1 %}
+        <div class="tags">
+            {% for tag in item.tags.split(",") %}
+            Tags:{{item.tags}}
+            {% endfor %}
+        </div>
+        {% endif %}
+        <!-- </div> -->
     </div>
+    {% endfor %}
+</div>
 </div>
 {% endblock %}

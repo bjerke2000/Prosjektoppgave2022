@@ -2,10 +2,10 @@ import os
 import uuid as uuid
 from datetime import date, datetime, timedelta
 from types import NoneType
-from sqlalchemy import update
+from sqlalchemy import nullslast, update
 from flask import Flask, flash, redirect, render_template, session, url_for
 from flask_login import (LoginManager, UserMixin, current_user, login_required,
-                         login_user, logout_user)
+                         login_user, logout_user, AnonymousUserMixin)
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
@@ -47,6 +47,8 @@ def before_request():
 
 db = SQLAlchemy(app)
 #===========================Mutable support=============================
+#Fixing of tracking for pickle object
+#https://docs.sqlalchemy.org/en/14/orm/extensions/mutable.html
 
 class MyMutableType(Mutable):
     def __getstate__(self):
@@ -57,7 +59,6 @@ class MyMutableType(Mutable):
 class MutableDict(Mutable, dict):
     @classmethod
     def coerce(cls, key, value):
-        "Convert plain dictionaries to MutableDict."
         if not isinstance(value, MutableDict):
             if isinstance(value, dict):
                 return MutableDict(value)
@@ -66,14 +67,10 @@ class MutableDict(Mutable, dict):
             return value
 
     def __setitem__(self, key, value):
-        "Detect dictionary set events and emit change events."
-
         dict.__setitem__(self, key, value)
         self.changed()
 
     def __delitem__(self, key):
-        "Detect dictionary del events and emit change events."
-
         dict.__delitem__(self, key)
         self.changed()
     
@@ -84,7 +81,7 @@ class MutableDict(Mutable, dict):
         self.update(state)
 
 class PickleClass(object):
-    pass
+    pass #Support 
 
 # ===========================TABLES======================================
 
@@ -140,18 +137,20 @@ class ItemModel(db.Model):
     post_date = db.Column(db.DateTime, nullable = False)#date posted
     edited_date = db.Column(db.DateTime, nullable = False)
     type = db.Column(db.Boolean)#0 = mappe : 1 = fil
+    description = db.Column(db.String(500), nullable = True)
     path = db.Column(db.String(500), nullable = False) #"./mappe1/mappe2/mappe3/"
-    group_privs = db.Column(MutableDict.as_mutable(db.PickleType))#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D 
+    group_privs = db.Column(MutableDict.as_mutable(db.PickleType))#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D
     tags = db.Column(db.String(500))#py list with id of tags where [] are replaced with ',' ",0,1,60,89,"
+    hitcount = db.Column(db.Integer)
     private = 0
-    editable = 0
+    editable = False
     ownername = ''
     filetype = ''
     content = ''
     groups = ''
     named_tags =''
 
-db.mapper(PickleClass, ItemModel)
+db.mapper(PickleClass, ItemModel) #part of mutable support 
 
 class CommentsModel(db.Model):
     __tablename__ = 'comment'
@@ -169,6 +168,13 @@ class TagModel(db.Model):
     tag = db.Column(db.String(50), nullable=False)
 
 #===========================FUNCTIONS===================================
+class Anonymous(AnonymousUserMixin):
+  def __init__(self):
+    self.id = 0
+    self.groups = ',1,'
+
+login_manager.anonymous_user = Anonymous
+#===========================FUNCTIONS===================================
 
 def PermissionHandler(required_priv, object): #Checks if the current user has the given priv for an item
     user_groups = current_user.groups.split(",")
@@ -185,12 +191,14 @@ def PermissionCreator(form, group_priv_dict={}): #Makes priv dictionairy from in
         group_priv_dict[group] = "r"
     for group in form.rw_groups.data:
         group_priv_dict[group] = "rw"
+    for group in group_priv_dict.keys():
+        if group not in form.rw_groups.data and group not in form.r_groups.data:
+            group_priv_dict[group]='none'
     match form.private.data:
         case 0:
             group_priv_dict[ALLUSERSGROUP] = 'r'
         case 1:
-            group_priv_dict[ALLUSERSGROUP] = 'DELETION'
-            group_priv_dict.pop(ALLUSERSGROUP)
+            group_priv_dict[ALLUSERSGROUP] = 'none'
     return group_priv_dict
 
 def GetAvaliableName_helper(path, name):#Starts GetAvaliableName
@@ -206,6 +214,37 @@ def GetAvaliableName(path, name, iteration): #Iterates through all folders with 
     else:
         iteration += 1
         return GetAvaliableName(path, name, iteration)
+
+def ItemInfoLoader(item, isitemroute=False):
+    text_types = ['txt']
+    picture_types=['jpg','png','jpeg','gif']
+    video_types=['mp4','webm']
+    item.ownername = UserModel.query.filter_by(id = item.owner).first().name
+    for group ,priv in item.group_privs.items():
+        if priv != 'none':
+            item.groups += item.groups + GroupModel.query.filter_by(id = group).first().group + ','
+    item.groups = item.groups[:-1]
+    if item.group_privs[ALLUSERSGROUP] != 'none':
+        item.private = 0
+    else:
+        item.private = 1
+    item.editable = PermissionHandler('rw',item)
+    if item.type == 1:
+        for tag_id in item.tags.split(',')[1:-1]:
+            item.named_tags = item.named_tags + TagModel.query.filter_by(id=tag_id).first().tag + ','
+        item.named_tags = item.named_tags[:-1]
+        type = item.itemname.split('~')[1].split('.')[-1] #Gets filetype
+        if type in text_types:
+            if isitemroute:
+                with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'r', encoding='utf-8') as f:
+                        lines = f.readlines()
+                item.content=lines
+            item.filetype = 'text'
+        elif type in picture_types:
+                item.filetype = 'picture'
+        elif type in video_types:
+                item.filetype = 'video'
+    return item
 
 def TagManager(tags): #if tag already exists: append id to list, else: create tag and retrieve recieved id and append to list
     tags = tags.split(',')
@@ -233,8 +272,11 @@ def DeleteItem(id):#Deletes item and all comments attatched
     item = ItemModel.query.filter_by(id = id).first()
     for comment in comments:
         db.session.delete(comment)
+    path = item.path
+    name = item.itemname
     db.session.delete(item)
     db.session.commit()
+    return path
 
 def DeleteUser(id): #Deletes a user and reassigns all items and comments from the user to [DELETED USER]
     comments = CommentsModel.query.filter_by(user_id = id)
@@ -286,36 +328,6 @@ def AdminTest():
         return True
     return False
 
-def ItemInfoLoader(item, isitemroute=False):
-    text_types = ['txt']
-    picture_types=['jpg','png','jpeg','gif']
-    video_types=['mp4','webm']
-    item.ownername = UserModel.query.filter_by(id = item.owner).first().name
-    for group ,priv in item.group_privs.items():
-        if priv != 'none':
-            item.groups += item.groups + GroupModel.query.filter_by(id = group).first().group + ','
-    item.groups = item.groups[:-1]
-    if ALLUSERSGROUP in item.group_privs:
-        item.private = 0
-    else:
-        item.private = 1
-    if item.type == 1:
-        for tag_id in item.tags.split(',')[1:-1]:
-            item.named_tags = item.named_tags + TagModel.query.filter_by(id=tag_id).first().tag + ','
-        item.named_tags = item.named_tags[:-1]
-        type = item.itemname.split('~')[1].split('.')[-1] #Gets filetype
-        if type in text_types:
-            if isitemroute:
-                with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'r', encoding='utf-8') as f:
-                        lines = f.readlines()
-                item.content=lines
-            item.filetype = 'text'
-        elif type in picture_types:
-                item.filetype = 'picture'
-        elif type in video_types:
-                item.filetype = 'video'
-    return item
-
 def GroupManagerLoader(groups):
     groups_dict = {}
     group_members_dict={}
@@ -359,7 +371,7 @@ def NewGroup(groupname, members):
 # index redirects to login
 @app.route('/')
 def index():
-    return redirect(url_for("login"))
+    return redirect(url_for('item', path = 'root', name = '-'))
 
 # login user
 @app.route("/login", methods=['GET', 'POST'])
@@ -433,11 +445,12 @@ def admin():
 
 #Display a file or folder
 @app.route('/item/<string:path>/<string:name>', methods=['GET','POST'])
-@login_required
 def item(path, name):
     item = ItemModel.query.filter_by(path=path, itemname=name).first()
     if isinstance(item, NoneType):
         return redirect(url_for('previous', path=path))
+    item.hitcount += 1
+    db.session.commit()
     match item.type:
         case 0:#Show contents of folder
             path = item.path.replace('-','/')[4:]+item.itemname.replace('-','/')
@@ -465,11 +478,11 @@ def item(path, name):
                 )
                 db.session.add(newcomment)
                 db.session.commit()
-                return redirect(url_for('item', path=path, name=name))
+                return redirect(url_for('item', path=item.path, name=item.itemname))
             comments = CommentsModel.query.filter_by(item_id = item.id).all()
             for comment in comments:
                 comment.username = UserModel.query.filter_by(id = comment.user_id).first().name
-            return render_template('file.html', item = item, comments = comments, commentform = commentform, current_folder = item, viewing = True, path = path, admin = AdminTest())
+            return render_template('file.html', item = item, comments = comments, commentform = commentform, current_folder = item, viewing = True, path = path, comment_amount=len(comments) ,admin = AdminTest())
 
 #Return to parent folder
 @app.route('/previous/<string:path>')
@@ -540,6 +553,7 @@ def addfile(path, parent):
             owner = current_user.id,
             type = 1,
             itemname = itemname_uuid,
+            description = form.description.data,
             path = itempath,
             group_privs = group_priv_dict,
             post_date = datetime.now(),
@@ -634,13 +648,37 @@ def remove_group_member(user, group, route):
 @login_required
 def edit(path, name):
     item = ItemModel.query.filter_by(path=path, itemname=name).first()
-    ItemInfoLoader(item)
     groups = GroupTupleManager()
-    object = EditFileFormLoader(item.named_tags, list(item.group_privs.keys()) , item.private)
-    form = EditFileForm(obj=object)
+    if item.itemname.split('.')[-1] in ['txt']:
+        ItemInfoLoader(item, True)
+        object = EditTextFileFormLoader(item.content, item.description ,item.named_tags, list(item.group_privs.keys()) , item.private)
+        form = EditTextFileForm(obj=object)
+        text = True
+    else:
+        ItemInfoLoader(item)
+        object = EditFileFormLoader(item.description ,item.named_tags, list(item.group_privs.keys()) , item.private)
+        form = EditFileForm(obj=object)
+        text = False
     form.r_groups.choices = groups
     form.rw_groups.choices = groups
-    return render_template('edit.html', form = form, item=item)
+    if form.validate_on_submit():
+        if text:
+            with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'w', encoding='utf-8') as f:
+                f.write(form.text.data)
+        item.description = form.description.data
+        item.tags = TagManager(form.tags.data)
+        item.group_privs = PermissionCreator(form, item.group_privs)
+        item.edited_date = datetime.now()
+        db.session.commit()
+        flash('Changes Saved', 'success')
+        return redirect(url_for('item', path=item.path, name=item.itemname))
+    return render_template('edit.html', form = form, item=item, text = text)
+
+@app.route('/delete_item/<int:id>')
+@login_required
+def delete_item(id):
+    path = DeleteItem(id)
+    return redirect(url_for('previous', path = path))
 
 #På bunnj
 if __name__ == "__main__":

@@ -23,6 +23,7 @@ body {
     background: var(--background-color);
     color: white;
     padding-bottom: 2.5rem;
+    height: 100%;
 }
 
 h1,
@@ -57,65 +58,78 @@ img {
 
 .master-content {
     display: flex;
-    justify-content: center;
-    margin-left: 10%;
+    max-height: auto;
+    float: left;
 }
 
 
 .textcontent {
-    max-width: 40%;
-    padding: 0 2rem;
-    background-color: #f4f4f4;
-    border-radius: 25px;
+    max-width: 66%;
+    padding: 2rem;
+    background-color: #333333;
+    border-radius: 5px;
     display: inline-block;
     margin-right: 2%;
 
 }
 
 .textcontent h4 {
-    color: #000;
+    color: white;
 }
 
 .textcontent p {
-    color: #000;
+    color: white;
     font-size: 18px;
 }
 
-.comments {
-    max-width: 30%;
-    margin: auto;
+.comment {
+    max-width: 66%;
+    margin-top: 2%;
     padding: 0 2rem;
-    text-align: center;
 }
 
 .mediacontent {
-    max-width: 70%;
+    display: flex;
     padding: 0 2rem;
     display: inline-block;
-    margin-right: 2%;
+    width: 66%;
 }
 
-.comment {
-    max-width: 40%;
+.fileshowcase {
+    width: 75vw;
+    display: flex;
+    flex-direction: column;
     margin: auto;
-    padding: 0 2rem;
-    background-color: #f4f4f4;
-    border-radius: 25px;
-    margin-top: 10px;
-    color: #141414;
+    background-color: #555555;
+    padding: 2%;
+    margin-top: -20px;
+    height: auto;
 }
 
-.comment .btn {
+.comments {
+    max-width: 66%;
+    padding: 1.3rem;
+    background-color: #333333;
+    border-radius: 5px;
+    margin-top: 10px;
+    color: white;
+}
+
+.comments .btn {
     padding: 4px;
 }
 
 .commentuser {
-    color: #000;
+    color: white;
 }
 
 .comment-text {
-    color: #000;
+    color: white;
     font-size: 21px;
+}
+
+.commentsection {
+    padding: 0 2rem;
 }
 
 .comment .btn {
@@ -127,17 +141,17 @@ img {
 }
 
 .sidebar {
-    height: 30%;
-    width: 10%;
-    background-color: #f4f4f4;
-    border-radius: 25px;
+    height: fit-content;
+    width: 20vw;
+    background-color: #333333;
+    border-radius: 5px;
     display: inline-block;
+    padding: 1.5rem;
 }
 
 .sidebar p {
-    padding: 6px 8px 6px 16px;
-    font-size: 20px;
-    color: Black;
+    font-size: 1.3rem;
+    color: white;
     display: block;
 }
 
@@ -355,7 +369,7 @@ nav img {
 .card {
     display: grid;
     width: 100%;
-    grid-template-columns: 11rem 25rem auto 14rem;
+    grid-template-columns: 10rem auto auto 14rem;
     grid-template-areas:
         "icon name tags owner_edit";
     border: 1px solid black;
@@ -378,7 +392,7 @@ nav img {
     grid-template-columns: auto auto;
     grid-template-areas:
         "file folder";
-        
+
 }
 
 .add_file {
@@ -435,7 +449,6 @@ nav img {
 
 .thumbnail {
     grid-area: icon;
-    border-right: 1px dotted gray;
 }
 
 .text_container {
@@ -444,22 +457,10 @@ nav img {
 
 .text_left {
     grid-area: name;
-    padding-left: 1rem;
 }
 
 .tags {
     grid-area: tags;
-    display: grid;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto auto ;
-    grid-template-areas:
-        "t1 t2 t3 t4 t5 t6 t7 t8 t9 10";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-}
-
-.tag {
-    margin-left: 1rem;
 }
 
 .text_right {
@@ -494,6 +495,15 @@ nav img {
     margin: auto;
 }
 
+.itemshowcase {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.unresizable {
+    resize: none;
+}
 
 /* Modal Content */
 .groupcreation-content {
@@ -520,6 +530,12 @@ nav img {
 
 .center {
     text-align: center;
+}
+
+.centerelement {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .redbg {

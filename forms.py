@@ -4,6 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FileField, DateField, SelectMultipleField, SelectField, HiddenField
 from wtforms.validators import DataRequired, EqualTo, Length, Email
 from flask_wtf.file import FileField, FileAllowed, FileRequired
+from wtforms.widgets import TextArea
 
 ADMINGROUP=2
 ALLUSERSGROUP=1
@@ -56,7 +57,7 @@ class GroupForm(FlaskForm):
     group = StringField(
         "Group Name",
         validators=[DataRequired()],
-        render_kw={'autofocus' : True, 'placeholder': "Email:"}
+        render_kw={'autofocus' : True, 'placeholder': "Email"}
         )
     members = SelectMultipleField(
         "Members",
@@ -95,6 +96,11 @@ class FileForm(FlaskForm):
         validators=[FileRequired(), FileAllowed([*text_types,*picture_types,*video_types],'Non supported type')],
         render_kw={'placeholder':'Add file'}
         )
+    description = StringField('Textarea',
+    widget=TextArea(),
+    validators=[DataRequired(), Length(max=150)],
+    render_kw={'resize':'none', 'placeholder':'Description...'}
+    )
     tags = StringField(
         'Tags', 
         validators=[Length(max=50)], 
@@ -117,16 +123,65 @@ class FileForm(FlaskForm):
     submit = SubmitField('Upload')
 
 class EditFileFormLoader():
-    def __init__(self,named_tags, groups, private) -> None:
+    def __init__(self, description, named_tags, groups, private) -> None:
+        self.description = description
         self.tags = named_tags
         self.r_groups = groups
         self.rw_groups = groups
         self.private = private
 
 class EditFileForm(FlaskForm):
+    description = StringField('Textarea',
+    widget=TextArea(),
+    validators=[DataRequired(), Length(max=150)],
+    render_kw={'resize':'none', 'placeholder':'Description...'}
+    )
     tags = StringField(
         'Tags', 
-        validators=[Length(max=50)]
+        validators=[Length(max=50)],
+        render_kw={'placeholder':'Tags seperated by comma'}
+        )
+    r_groups = SelectMultipleField(
+        "Groups with read Privilages",
+        coerce=int
+    )
+    rw_groups = SelectMultipleField(
+        "Groups with read and write Privilages",
+        coerce=int
+    )
+    private = SelectField(
+        "Private",
+        choices=[(0,"Public"),(1,"Private")],
+        coerce=int
+    )
+    submit = SubmitField('Save')
+
+class EditTextFileFormLoader():
+    def __init__(self,lines, description, named_tags, groups, private) -> None:
+        br_lines = ''
+        for line in lines:
+            br_lines = br_lines + line.strip('[]')
+        self.description = description
+        self.text = br_lines
+        self.tags = named_tags
+        self.r_groups = groups
+        self.rw_groups = groups
+        self.private = private
+
+class EditTextFileForm(FlaskForm):
+    text = StringField('Textarea',
+    widget=TextArea(),
+    render_kw={'resize':'none'}
+    )
+    description = StringField('Textarea',
+    widget=TextArea(),
+    validators=[DataRequired(), Length(max=150)],
+    render_kw={'resize':'none', 'placeholder':'Description...'}
+    )
+    tags = StringField(
+        'Tags', 
+        validators=[Length(max=50)],
+        render_kw={'placeholder':'Tags seperated by comma'}
         )
     r_groups = SelectMultipleField(
         "Groups with read Privilages",
@@ -145,6 +200,7 @@ class EditFileForm(FlaskForm):
 
 class CommentForm(FlaskForm):
     comment = StringField('Comment',
+    widget=TextArea(),
     validators=[DataRequired(), Length(max=150)],
     render_kw={'placeholder':'Comment'}
     )
