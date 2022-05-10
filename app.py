@@ -5,7 +5,7 @@ from types import NoneType
 from sqlalchemy import nullslast, update
 from flask import Flask, flash, redirect, render_template, session, url_for
 from flask_login import (LoginManager, UserMixin, current_user, login_required,
-                         login_user, logout_user)
+                         login_user, logout_user, AnonymousUserMixin)
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
@@ -168,6 +168,13 @@ class TagModel(db.Model):
     tag = db.Column(db.String(50), nullable=False)
 
 #===========================FUNCTIONS===================================
+class Anonymous(AnonymousUserMixin):
+  def __init__(self):
+    self.id = 0
+    self.groups = ',1,'
+
+login_manager.anonymous_user = Anonymous
+#===========================FUNCTIONS===================================
 
 def PermissionHandler(required_priv, object): #Checks if the current user has the given priv for an item
     user_groups = current_user.groups.split(",")
@@ -234,8 +241,11 @@ def DeleteItem(id):#Deletes item and all comments attatched
     item = ItemModel.query.filter_by(id = id).first()
     for comment in comments:
         db.session.delete(comment)
+    path = item.path
+    name = item.itemname
     db.session.delete(item)
     db.session.commit()
+    return path
 
 def DeleteUser(id): #Deletes a user and reassigns all items and comments from the user to [DELETED USER]
     comments = CommentsModel.query.filter_by(user_id = id)
@@ -360,7 +370,7 @@ def NewGroup(groupname, members):
 # index redirects to login
 @app.route('/')
 def index():
-    return redirect(url_for("login"))
+    return redirect(url_for('item', path = 'root', name = '-'))
 
 # login user
 @app.route("/login", methods=['GET', 'POST'])
@@ -434,7 +444,6 @@ def admin():
 
 #Display a file or folder
 @app.route('/item/<string:path>/<string:name>', methods=['GET','POST'])
-@login_required
 def item(path, name):
     item = ItemModel.query.filter_by(path=path, itemname=name).first()
     if isinstance(item, NoneType):
@@ -468,11 +477,11 @@ def item(path, name):
                 )
                 db.session.add(newcomment)
                 db.session.commit()
-                return redirect(url_for('item', path=path, name=name))
+                return redirect(url_for('item', path=item.path, name=item.itemname))
             comments = CommentsModel.query.filter_by(item_id = item.id).all()
             for comment in comments:
                 comment.username = UserModel.query.filter_by(id = comment.user_id).first().name
-            return render_template('file.html', item = item, comments = comments, commentform = commentform, current_folder = item, viewing = True, path = path, admin = AdminTest())
+            return render_template('file.html', item = item, comments = comments, commentform = commentform, current_folder = item, viewing = True, path = path, comment_amount=len(comments) ,admin = AdminTest())
 
 #Return to parent folder
 @app.route('/previous/<string:path>')
@@ -543,6 +552,7 @@ def addfile(path, parent):
             owner = current_user.id,
             type = 1,
             itemname = itemname_uuid,
+            description = form.description.data,
             path = itempath,
             group_privs = group_priv_dict,
             post_date = datetime.now(),
@@ -640,12 +650,12 @@ def edit(path, name):
     groups = GroupTupleManager()
     if item.itemname.split('.')[-1] in ['txt']:
         ItemInfoLoader(item, True)
-        object = EditTextFileFormLoader(item.content, item.named_tags, list(item.group_privs.keys()) , item.private)
+        object = EditTextFileFormLoader(item.content, item.description ,item.named_tags, list(item.group_privs.keys()) , item.private)
         form = EditTextFileForm(obj=object)
         text = True
     else:
         ItemInfoLoader(item)
-        object = EditFileFormLoader(item.named_tags, list(item.group_privs.keys()) , item.private)
+        object = EditFileFormLoader(item.description ,item.named_tags, list(item.group_privs.keys()) , item.private)
         form = EditFileForm(obj=object)
         text = False
     form.r_groups.choices = groups
@@ -654,6 +664,7 @@ def edit(path, name):
         if text:
             with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'w', encoding='utf-8') as f:
                 f.write(form.text.data)
+        item.description = form.description.data
         item.tags = TagManager(form.tags.data)
         item.group_privs = PermissionCreator(form, item.group_privs)
         item.edited_date = datetime.now()
@@ -661,6 +672,12 @@ def edit(path, name):
         flash('Changes Saved', 'success')
         return redirect(url_for('item', path=item.path, name=item.itemname))
     return render_template('edit.html', form = form, item=item, text = text)
+
+@app.route('/delete_item/<int:id>')
+@login_required
+def delete_item(id):
+    path = DeleteItem(id)
+    return redirect(url_for('previous', path = path))
 
 #På bunnj
 if __name__ == "__main__":
