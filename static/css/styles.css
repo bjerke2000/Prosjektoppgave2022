@@ -58,7 +58,7 @@ img {
 .master-content {
     display: flex;
     justify-content: center;
-    margin-left: 12vw;
+    max-height: 25vw;
 }
 
 
@@ -89,10 +89,22 @@ img {
 }
 
 .mediacontent {
-    max-width: 70%;
+    display: flex;
     padding: 0 2rem;
     display: inline-block;
-    margin-right: 2%;
+    margin-right: 10%;
+    object-fit: scale-down;
+    width: 40vw;
+}
+
+.fileshowcase {
+    border: 1px solid black;
+    width: 75vw;
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    background-color: #555555;
+    padding: 2%;
 }
 
 .comment {
@@ -130,13 +142,12 @@ img {
     height: 30%;
     width: 10vw;
     background-color: #f4f4f4;
-    border-radius: 25px;
+    border-radius: 5px;
     display: inline-block;
 }
 
 .sidebar p {
-    padding: 6px 8px 6px 16px;
-    font-size: 20px;
+    font-size: 1.5rem;
     color: Black;
     display: block;
 }
@@ -487,6 +498,9 @@ nav img {
     margin-right: auto;
 }
 
+.unresizable {
+    resize: none;
+}
 
 /* Modal Content */
 .groupcreation-content {
