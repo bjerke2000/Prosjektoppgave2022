@@ -184,6 +184,7 @@ class EditTextFileForm(FlaskForm):
 
 class CommentForm(FlaskForm):
     comment = StringField('Comment',
+    widget=TextArea(),
     validators=[DataRequired(), Length(max=150)],
     render_kw={'placeholder':'Comment'}
     )

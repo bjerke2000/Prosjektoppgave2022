@@ -2,7 +2,7 @@ import os
 import uuid as uuid
 from datetime import date, datetime, timedelta
 from types import NoneType
-from sqlalchemy import update
+from sqlalchemy import nullslast, update
 from flask import Flask, flash, redirect, render_template, session, url_for
 from flask_login import (LoginManager, UserMixin, current_user, login_required,
                          login_user, logout_user)
@@ -47,6 +47,8 @@ def before_request():
 
 db = SQLAlchemy(app)
 #===========================Mutable support=============================
+#Fixing of tracking for pickle object
+#https://docs.sqlalchemy.org/en/14/orm/extensions/mutable.html
 
 class MyMutableType(Mutable):
     def __getstate__(self):
@@ -57,7 +59,6 @@ class MyMutableType(Mutable):
 class MutableDict(Mutable, dict):
     @classmethod
     def coerce(cls, key, value):
-        "Convert plain dictionaries to MutableDict."
         if not isinstance(value, MutableDict):
             if isinstance(value, dict):
                 return MutableDict(value)
@@ -66,14 +67,10 @@ class MutableDict(Mutable, dict):
             return value
 
     def __setitem__(self, key, value):
-        "Detect dictionary set events and emit change events."
-
         dict.__setitem__(self, key, value)
         self.changed()
 
     def __delitem__(self, key):
-        "Detect dictionary del events and emit change events."
-
         dict.__delitem__(self, key)
         self.changed()
     
@@ -84,7 +81,7 @@ class MutableDict(Mutable, dict):
         self.update(state)
 
 class PickleClass(object):
-    pass
+    pass #Support 
 
 # ===========================TABLES======================================
 
@@ -140,9 +137,11 @@ class ItemModel(db.Model):
     post_date = db.Column(db.DateTime, nullable = False)#date posted
     edited_date = db.Column(db.DateTime, nullable = False)
     type = db.Column(db.Boolean)#0 = mappe : 1 = fil
+    description = db.Column(db.String(500), nullable = True)
     path = db.Column(db.String(500), nullable = False) #"./mappe1/mappe2/mappe3/"
-    group_privs = db.Column(MutableDict.as_mutable(db.PickleType))#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D 
+    group_privs = db.Column(MutableDict.as_mutable(db.PickleType))#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D
     tags = db.Column(db.String(500))#py list with id of tags where [] are replaced with ',' ",0,1,60,89,"
+    hitcount = db.Column(db.Integer)
     private = 0
     editable = 0
     ownername = ''
@@ -151,7 +150,7 @@ class ItemModel(db.Model):
     groups = ''
     named_tags =''
 
-db.mapper(PickleClass, ItemModel)
+db.mapper(PickleClass, ItemModel) #part of mutable support 
 
 class CommentsModel(db.Model):
     __tablename__ = 'comment'
@@ -440,6 +439,8 @@ def item(path, name):
     item = ItemModel.query.filter_by(path=path, itemname=name).first()
     if isinstance(item, NoneType):
         return redirect(url_for('previous', path=path))
+    item.hitcount += 1
+    db.session.commit()
     match item.type:
         case 0:#Show contents of folder
             path = item.path.replace('-','/')[4:]+item.itemname.replace('-','/')
@@ -650,6 +651,9 @@ def edit(path, name):
     form.r_groups.choices = groups
     form.rw_groups.choices = groups
     if form.validate_on_submit():
+        if text:
+            with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'w', encoding='utf-8') as f:
+                f.write(form.text.data)
         item.tags = TagManager(form.tags.data)
         item.group_privs = PermissionCreator(form, item.group_privs)
         item.edited_date = datetime.now()
