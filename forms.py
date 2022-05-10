@@ -57,7 +57,7 @@ class GroupForm(FlaskForm):
     group = StringField(
         "Group Name",
         validators=[DataRequired()],
-        render_kw={'autofocus' : True, 'placeholder': "Email:"}
+        render_kw={'autofocus' : True, 'placeholder': "Email"}
         )
     members = SelectMultipleField(
         "Members",
@@ -127,7 +127,8 @@ class EditFileFormLoader():
 class EditFileForm(FlaskForm):
     tags = StringField(
         'Tags', 
-        validators=[Length(max=50)]
+        validators=[Length(max=50)],
+        render_kw={'placeholder':'Tags seperated by comma'}
         )
     r_groups = SelectMultipleField(
         "Groups with read Privilages",
@@ -146,7 +147,11 @@ class EditFileForm(FlaskForm):
 
 class EditTextFileFormLoader():
     def __init__(self,lines,named_tags, groups, private) -> None:
-        self.text = lines
+        br_lines = ''
+        for line in lines:
+            br_lines = br_lines + line.strip('[]')
+
+        self.text = br_lines
         self.tags = named_tags
         self.r_groups = groups
         self.rw_groups = groups
@@ -159,7 +164,8 @@ class EditTextFileForm(FlaskForm):
     )
     tags = StringField(
         'Tags', 
-        validators=[Length(max=50)]
+        validators=[Length(max=50)],
+        render_kw={'placeholder':'Tags seperated by comma'}
         )
     r_groups = SelectMultipleField(
         "Groups with read Privilages",
