@@ -23,6 +23,7 @@ body {
     background: var(--background-color);
     color: white;
     padding-bottom: 2.5rem;
+    height: 100%;
 }
 
 h1,
@@ -57,8 +58,8 @@ img {
 
 .master-content {
     display: flex;
-    justify-content: center;
-    margin-left: 10%;
+    max-height: auto;
+    float: left;
 }
 
 
@@ -82,22 +83,31 @@ img {
 }
 
 .comments {
-    max-width: 30%;
-    margin: auto;
+    max-width: 66%;
+    margin-top: 2%;
     padding: 0 2rem;
-    text-align: center;
 }
 
 .mediacontent {
-    max-width: 70%;
+    display: flex;
     padding: 0 2rem;
     display: inline-block;
-    margin-right: 2%;
+    width: 66%;
+}
+
+.fileshowcase {
+    width: 75vw;
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    background-color: #555555;
+    padding: 2%;
+    margin-top: -20px;
+    height: auto;
 }
 
 .comment {
     max-width: 40%;
-    margin: auto;
     padding: 0 2rem;
     background-color: #f4f4f4;
     border-radius: 25px;
@@ -127,16 +137,15 @@ img {
 }
 
 .sidebar {
-    height: 30%;
-    width: 10%;
+    height: fit-content;
+    width: 15vw;
     background-color: #f4f4f4;
-    border-radius: 25px;
+    border-radius: 5px;
     display: inline-block;
 }
 
 .sidebar p {
-    padding: 6px 8px 6px 16px;
-    font-size: 20px;
+    font-size: 1.5rem;
     color: Black;
     display: block;
 }
@@ -355,7 +364,7 @@ nav img {
 .card {
     display: grid;
     width: 100%;
-    grid-template-columns: 20rem auto auto 25rem;
+    grid-template-columns: 10rem auto auto 14rem;
     grid-template-areas:
         "icon name tags owner_edit";
     border: 1px solid black;
@@ -378,7 +387,7 @@ nav img {
     grid-template-columns: auto auto;
     grid-template-areas:
         "file folder";
-        
+
 }
 
 .add_file {
@@ -481,6 +490,15 @@ nav img {
     margin: auto;
 }
 
+.itemshowcase {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.unresizable {
+    resize: none;
+}
 
 /* Modal Content */
 .groupcreation-content {
@@ -507,6 +525,12 @@ nav img {
 
 .center {
     text-align: center;
+}
+
+.centerelement {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .redbg {
