@@ -9,7 +9,7 @@ from flask_login import (LoginManager, UserMixin, current_user, login_required,
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
-
+from sqlalchemy.ext.mutable import Mutable
 from forms import *
 
 app = Flask(__name__)
@@ -46,6 +46,45 @@ def before_request():
 
 
 db = SQLAlchemy(app)
+#===========================Mutable support=============================
+
+class MyMutableType(Mutable):
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        d.pop('_parents', None)
+        return d
+
+class MutableDict(Mutable, dict):
+    @classmethod
+    def coerce(cls, key, value):
+        "Convert plain dictionaries to MutableDict."
+        if not isinstance(value, MutableDict):
+            if isinstance(value, dict):
+                return MutableDict(value)
+            return Mutable.coerce(key, value)
+        else:
+            return value
+
+    def __setitem__(self, key, value):
+        "Detect dictionary set events and emit change events."
+
+        dict.__setitem__(self, key, value)
+        self.changed()
+
+    def __delitem__(self, key):
+        "Detect dictionary del events and emit change events."
+
+        dict.__delitem__(self, key)
+        self.changed()
+    
+    def __getstate__(self):
+        return dict(self)
+
+    def __setstate__(self, state):
+        self.update(state)
+
+class PickleClass(object):
+    pass
 
 # ===========================TABLES======================================
 
@@ -102,7 +141,7 @@ class ItemModel(db.Model):
     edited_date = db.Column(db.DateTime, nullable = False)
     type = db.Column(db.Boolean)#0 = mappe : 1 = fil
     path = db.Column(db.String(500), nullable = False) #"./mappe1/mappe2/mappe3/"
-    group_privs = db.Column(db.PickleType)#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D 
+    group_privs = db.Column(MutableDict.as_mutable(db.PickleType))#lagra privs i dictionaries ved å bruk pickle (var = pickle.dumps(innhold) / pickle.loads(var)) Pickle Rick :D 
     tags = db.Column(db.String(500))#py list with id of tags where [] are replaced with ',' ",0,1,60,89,"
     private = 0
     editable = 0
@@ -111,6 +150,8 @@ class ItemModel(db.Model):
     content = ''
     groups = ''
     named_tags =''
+
+db.mapper(PickleClass, ItemModel)
 
 class CommentsModel(db.Model):
     __tablename__ = 'comment'
@@ -126,7 +167,6 @@ class TagModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     # name of tag f.ex: Documentation
     tag = db.Column(db.String(50), nullable=False)
-
 
 #===========================FUNCTIONS===================================
 
@@ -229,6 +269,18 @@ def DeleteGroupMember(user, group):
     user_object.groups = user_object.groups.replace(f',{group},',',')
     db.session.commit()
 
+def DeleteGroup(id):
+    for user in UserModel.query.all():
+        if ','+ str(id) +',' in user.groups:
+            user.groups = user.groups.replace(f',{id},',',')
+    for item in ItemModel.query.all():
+        if id in item.group_privs:
+            item.group_privs[id]='none'
+    db.session.commit()
+    group = GroupModel.query.filter_by(id=id).first()
+    db.session.delete(group)
+    db.session.commit()
+
 def AdminTest():
     if str(ADMINGROUP) in current_user.groups.split(','):
         return True
@@ -239,8 +291,9 @@ def ItemInfoLoader(item, isitemroute=False):
     picture_types=['jpg','png','jpeg','gif']
     video_types=['mp4','webm']
     item.ownername = UserModel.query.filter_by(id = item.owner).first().name
-    for group in item.group_privs.keys():
-        item.groups += item.groups + GroupModel.query.filter_by(id = group).first().group + ','
+    for group ,priv in item.group_privs.items():
+        if priv != 'none':
+            item.groups += item.groups + GroupModel.query.filter_by(id = group).first().group + ','
     item.groups = item.groups[:-1]
     if ALLUSERSGROUP in item.group_privs:
         item.private = 0
@@ -511,18 +564,19 @@ def admin_delete(table, id):
         match table:
             case 'users':
                 DeleteUser(id)
-                #flash(f'User succesfully deleted', 'success')
+                flash(f'User succesfully deleted', 'success')
             case 'items':
                 DeleteItem(id)
-                #flash(f'Item succesfully deleted', 'success')
+                flash(f'Item succesfully deleted', 'success')
             case 'groups':
-                pass #dette blir grusomt å kod.
+                DeleteGroup(id)
+                flash('Group succesfully deleted', 'success')
             case 'tags':
                 DeleteTag(id)
-                #flash(f'Tag succesfully deleted', 'success')
+                flash(f'Tag succesfully deleted', 'success')
             case 'comments':
                 DeleteComment(id)
-                #flash(f'Comment succesfully deleted', 'success')
+                flash(f'Comment succesfully deleted', 'success')             
         return redirect(url_for('admin'))
     return redirect(url_for('index'))
     
@@ -579,16 +633,14 @@ def remove_group_member(user, group, route):
 @app.route('/edit/<string:path>/<string:name>', methods=['GET','POST'])
 @login_required
 def edit(path, name):
-    form = EditFileForm()
     item = ItemModel.query.filter_by(path=path, itemname=name).first()
     ItemInfoLoader(item)
     groups = GroupTupleManager()
+    object = EditFileFormLoader(item.named_tags, list(item.group_privs.keys()) , item.private)
+    form = EditFileForm(obj=object)
     form.r_groups.choices = groups
     form.rw_groups.choices = groups
-    form.tags.value = item.named_tags
-    form.private.value = (item.private, 'Private' if item.private else 'Public')
     return render_template('edit.html', form = form, item=item)
-
 
 #På bunnj
 if __name__ == "__main__":

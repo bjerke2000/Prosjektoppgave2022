@@ -116,11 +116,17 @@ class FileForm(FlaskForm):
     )
     submit = SubmitField('Upload')
 
+class EditFileFormLoader():
+    def __init__(self,named_tags, groups, private) -> None:
+        self.tags = named_tags
+        self.r_groups = groups
+        self.rw_groups = groups
+        self.private = private
+
 class EditFileForm(FlaskForm):
     tags = StringField(
         'Tags', 
-        validators=[Length(max=50)], 
-        render_kw={'placeholder':'Tags seperated by comma'}
+        validators=[Length(max=50)]
         )
     r_groups = SelectMultipleField(
         "Groups with read Privilages",
@@ -133,7 +139,6 @@ class EditFileForm(FlaskForm):
     private = SelectField(
         "Private",
         choices=[(0,"Public"),(1,"Private")],
-        default=(0,"Public"),
         coerce=int
     )
     submit = SubmitField('Upload')
