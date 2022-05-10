@@ -39,6 +39,9 @@
             {{ form.csrf_token() }}
             <p>Change tags:</p>
             <div class="mb-3">
+                {{ form.description(class = "form-control") }}
+            </div>
+            <div class="mb-3">
                 {{ form.tags(class = "form-control") }}
             </div>
             <p>Read:</p>

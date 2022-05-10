@@ -96,6 +96,10 @@ class FileForm(FlaskForm):
         validators=[FileRequired(), FileAllowed([*text_types,*picture_types,*video_types],'Non supported type')],
         render_kw={'placeholder':'Add file'}
         )
+    description = StringField('Textarea',
+    widget=TextArea(),
+    render_kw={'resize':'none'}
+    )
     tags = StringField(
         'Tags', 
         validators=[Length(max=50)], 
@@ -125,6 +129,10 @@ class EditFileFormLoader():
         self.private = private
 
 class EditFileForm(FlaskForm):
+    description = StringField('Textarea',
+    widget=TextArea(),
+    render_kw={'resize':'none'}
+    )
     tags = StringField(
         'Tags', 
         validators=[Length(max=50)],
@@ -159,6 +167,10 @@ class EditTextFileFormLoader():
 
 class EditTextFileForm(FlaskForm):
     text = StringField('Textarea',
+    widget=TextArea(),
+    render_kw={'resize':'none'}
+    )
+    description = StringField('Textarea',
     widget=TextArea(),
     render_kw={'resize':'none'}
     )
