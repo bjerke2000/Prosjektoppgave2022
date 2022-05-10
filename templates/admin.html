@@ -37,7 +37,8 @@
         </tr>
         {% for group in groups %}
         <tr>
-            <td><a class="btn" href="{{url_for('admin_delete', table='groups', id = group.id)}}">Delete</a></td>
+            <td><a class="btn" onclick="return confirm('Are you sure you want to delete this group?');"
+                    href="{{url_for('admin_delete', table='groups', id = group.id)}}">Delete</a></td>
             <td>{{group.id}}</td>
             <td>{{group.group}}</td>
         </tr>
