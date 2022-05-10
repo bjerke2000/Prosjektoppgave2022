@@ -114,7 +114,7 @@ class FileForm(FlaskForm):
         default=(0,"Public"),
         coerce=int
     )
-    submit = SubmitField('Upload')
+    submit = SubmitField('Save')
 
 class EditFileFormLoader():
     def __init__(self,named_tags, groups, private) -> None:
