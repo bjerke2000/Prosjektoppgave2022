@@ -198,7 +198,7 @@ class CommentForm(FlaskForm):
     comment = StringField('Comment',
     widget=TextArea(),
     validators=[DataRequired(), Length(max=150)],
-    render_kw={'placeholder':'Comment'}
+    render_kw={'placeholder':'Write your comment here...'}
     )
     submit = SubmitField('Post')
 

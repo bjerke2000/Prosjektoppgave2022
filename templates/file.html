@@ -24,14 +24,21 @@
             <p>Uploaded by: {#item.ownername#}</a>
             <p>Created: {{item.post_date}}</p>
             <p>Updated:{{item.edited_date}}</p>
+            <p>Views: {{item.hitcount}}</p>
+            <p>Description:</p>
+            {% if item.description != None %}
+            <p>{{item.description}}</p>
+            {% else %}
+            <p>This file has no description...</p>
+            {% endif %}
             <a class="btn" style="margin: 15px;"
                 href="{{url_for('edit', path = item.path, name = item.itemname )}}">Edit</a>
             <a class="btn redbg" onclick="return confirm('Are you sure you want to delete this file?');"
                 style="margin:15px;" href="#">Delete</a>
         </div>
     </div>
-    <div class="comments">
-        <h4>Comments</h4>
+    <div class="comment">
+        <h4>Write a comment...</h4>
         <form method="POST">
             {{commentform.csrf_token}}
             {{commentform.comment(class = "form-control")}}
@@ -39,15 +46,20 @@
 
     </div>
     </form>
-    {% for comment in comments %}
-    <div class="comment">
-        <h5 class="commentuser">{{ comment.username }}</h5>
-        <p class="comment-text">{{comment.comment}}</p>
-        <p>Posted: {{comment.date}}</p>
-        {% if current_user.id == comment.user_id %}
-        <a class="btn" href="{{url_for('delcomment', id=comment.id)}}">Delete</a>
-        {% endif %}
+    <div class="commentsection">
+        <h4>Comments({{comment_amount}})</h4>
+        {% for comment in comments %}
+        <div class="comments">
+            <h5 class="commentuser">Comment by {{ comment.username }}:</h5>
+            <p class="comment-text">{{comment.comment}}</p>
+            <p>Posted: {{comment.date}}</p>
+            {% if current_user.id == comment.user_id %}
+            <a class="btn redbg" href="{{url_for('delcomment', id=comment.id)}}"
+                onclick="return confirm('Are you sure you want to delete your comment?');">Delete</a>
+            {% endif %}
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
+
 {% endblock %}

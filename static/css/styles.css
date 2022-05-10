@@ -64,25 +64,25 @@ img {
 
 
 .textcontent {
-    max-width: 40%;
-    padding: 0 2rem;
-    background-color: #f4f4f4;
-    border-radius: 25px;
+    max-width: 66%;
+    padding: 2rem;
+    background-color: #333333;
+    border-radius: 5px;
     display: inline-block;
     margin-right: 2%;
 
 }
 
 .textcontent h4 {
-    color: #000;
+    color: white;
 }
 
 .textcontent p {
-    color: #000;
+    color: white;
     font-size: 18px;
 }
 
-.comments {
+.comment {
     max-width: 66%;
     margin-top: 2%;
     padding: 0 2rem;
@@ -106,26 +106,30 @@ img {
     height: auto;
 }
 
-.comment {
-    max-width: 40%;
-    padding: 0 2rem;
-    background-color: #f4f4f4;
-    border-radius: 25px;
+.comments {
+    max-width: 66%;
+    padding: 1.3rem;
+    background-color: #333333;
+    border-radius: 5px;
     margin-top: 10px;
-    color: #141414;
+    color: white;
 }
 
-.comment .btn {
+.comments .btn {
     padding: 4px;
 }
 
 .commentuser {
-    color: #000;
+    color: white;
 }
 
 .comment-text {
-    color: #000;
+    color: white;
     font-size: 21px;
+}
+
+.commentsection {
+    padding: 0 2rem;
 }
 
 .comment .btn {
@@ -138,15 +142,16 @@ img {
 
 .sidebar {
     height: fit-content;
-    width: 15vw;
-    background-color: #f4f4f4;
+    width: 20vw;
+    background-color: #333333;
     border-radius: 5px;
     display: inline-block;
+    padding: 1.5rem;
 }
 
 .sidebar p {
-    font-size: 1.5rem;
-    color: Black;
+    font-size: 1.3rem;
+    color: white;
     display: block;
 }
 

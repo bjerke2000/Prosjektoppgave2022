@@ -472,7 +472,7 @@ def item(path, name):
             comments = CommentsModel.query.filter_by(item_id = item.id).all()
             for comment in comments:
                 comment.username = UserModel.query.filter_by(id = comment.user_id).first().name
-            return render_template('file.html', item = item, comments = comments, commentform = commentform, current_folder = item, viewing = True, path = path, admin = AdminTest())
+            return render_template('file.html', item = item, comments = comments, commentform = commentform, current_folder = item, viewing = True, path = path, comment_amount=len(comments), admin = AdminTest())
 
 #Return to parent folder
 @app.route('/previous/<string:path>')
