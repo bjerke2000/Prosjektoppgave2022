@@ -143,7 +143,7 @@ class ItemModel(db.Model):
     tags = db.Column(db.String(500))#py list with id of tags where [] are replaced with ',' ",0,1,60,89,"
     hitcount = db.Column(db.Integer)
     private = 0
-    editable = 0
+    editable = False
     ownername = ''
     filetype = ''
     content = ''
@@ -214,6 +214,37 @@ def GetAvaliableName(path, name, iteration): #Iterates through all folders with 
     else:
         iteration += 1
         return GetAvaliableName(path, name, iteration)
+
+def ItemInfoLoader(item, isitemroute=False):
+    text_types = ['txt']
+    picture_types=['jpg','png','jpeg','gif']
+    video_types=['mp4','webm']
+    item.ownername = UserModel.query.filter_by(id = item.owner).first().name
+    for group ,priv in item.group_privs.items():
+        if priv != 'none':
+            item.groups += item.groups + GroupModel.query.filter_by(id = group).first().group + ','
+    item.groups = item.groups[:-1]
+    if item.group_privs[ALLUSERSGROUP] != 'none':
+        item.private = 0
+    else:
+        item.private = 1
+    item.editable = PermissionHandler('rw',item)
+    if item.type == 1:
+        for tag_id in item.tags.split(',')[1:-1]:
+            item.named_tags = item.named_tags + TagModel.query.filter_by(id=tag_id).first().tag + ','
+        item.named_tags = item.named_tags[:-1]
+        type = item.itemname.split('~')[1].split('.')[-1] #Gets filetype
+        if type in text_types:
+            if isitemroute:
+                with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'r', encoding='utf-8') as f:
+                        lines = f.readlines()
+                item.content=lines
+            item.filetype = 'text'
+        elif type in picture_types:
+                item.filetype = 'picture'
+        elif type in video_types:
+                item.filetype = 'video'
+    return item
 
 def TagManager(tags): #if tag already exists: append id to list, else: create tag and retrieve recieved id and append to list
     tags = tags.split(',')
@@ -296,36 +327,6 @@ def AdminTest():
     if str(ADMINGROUP) in current_user.groups.split(','):
         return True
     return False
-
-def ItemInfoLoader(item, isitemroute=False):
-    text_types = ['txt']
-    picture_types=['jpg','png','jpeg','gif']
-    video_types=['mp4','webm']
-    item.ownername = UserModel.query.filter_by(id = item.owner).first().name
-    for group ,priv in item.group_privs.items():
-        if priv != 'none':
-            item.groups += item.groups + GroupModel.query.filter_by(id = group).first().group + ','
-    item.groups = item.groups[:-1]
-    if item.group_privs[ALLUSERSGROUP] != 'none':
-        item.private = 0
-    else:
-        item.private = 1
-    if item.type == 1:
-        for tag_id in item.tags.split(',')[1:-1]:
-            item.named_tags = item.named_tags + TagModel.query.filter_by(id=tag_id).first().tag + ','
-        item.named_tags = item.named_tags[:-1]
-        type = item.itemname.split('~')[1].split('.')[-1] #Gets filetype
-        if type in text_types:
-            if isitemroute:
-                with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'r', encoding='utf-8') as f:
-                        lines = f.readlines()
-                item.content=lines
-            item.filetype = 'text'
-        elif type in picture_types:
-                item.filetype = 'picture'
-        elif type in video_types:
-                item.filetype = 'video'
-    return item
 
 def GroupManagerLoader(groups):
     groups_dict = {}
