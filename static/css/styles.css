@@ -23,7 +23,6 @@ body {
     background: var(--background-color);
     color: white;
     padding-bottom: 2.5rem;
-    height: 100%;
 }
 
 h1,
@@ -58,78 +57,65 @@ img {
 
 .master-content {
     display: flex;
-    max-height: auto;
-    float: left;
+    justify-content: center;
+    margin-left: 10%;
 }
 
 
 .textcontent {
-    max-width: 66%;
-    padding: 2rem;
-    background-color: #333333;
-    border-radius: 5px;
+    max-width: 40%;
+    padding: 0 2rem;
+    background-color: #f4f4f4;
+    border-radius: 25px;
     display: inline-block;
     margin-right: 2%;
 
 }
 
 .textcontent h4 {
-    color: white;
+    color: #000;
 }
 
 .textcontent p {
-    color: white;
+    color: #000;
     font-size: 18px;
 }
 
-.comment {
-    max-width: 66%;
-    margin-top: 2%;
+.comments {
+    max-width: 30%;
+    margin: auto;
     padding: 0 2rem;
+    text-align: center;
 }
 
 .mediacontent {
-    display: flex;
+    max-width: 70%;
     padding: 0 2rem;
     display: inline-block;
-    width: 66%;
+    margin-right: 2%;
 }
 
-.fileshowcase {
-    width: 75vw;
-    display: flex;
-    flex-direction: column;
+.comment {
+    max-width: 40%;
     margin: auto;
-    background-color: #555555;
-    padding: 2%;
-    margin-top: -20px;
-    height: auto;
-}
-
-.comments {
-    max-width: 66%;
-    padding: 1.3rem;
-    background-color: #333333;
-    border-radius: 5px;
+    padding: 0 2rem;
+    background-color: #f4f4f4;
+    border-radius: 25px;
     margin-top: 10px;
-    color: white;
+    color: #141414;
 }
 
-.comments .btn {
+.comment .btn {
     padding: 4px;
 }
 
 .commentuser {
-    color: white;
+    color: #000;
 }
 
 .comment-text {
-    color: white;
+    color: #000;
     font-size: 21px;
-}
-
-.commentsection {
-    padding: 0 2rem;
 }
 
 .comment .btn {
@@ -141,17 +127,17 @@ img {
 }
 
 .sidebar {
-    height: fit-content;
-    width: 20vw;
-    background-color: #333333;
-    border-radius: 5px;
+    height: 30%;
+    width: 10%;
+    background-color: #f4f4f4;
+    border-radius: 25px;
     display: inline-block;
-    padding: 1.5rem;
 }
 
 .sidebar p {
-    font-size: 1.3rem;
-    color: white;
+    padding: 6px 8px 6px 16px;
+    font-size: 20px;
+    color: Black;
     display: block;
 }
 
@@ -369,7 +355,7 @@ nav img {
 .card {
     display: grid;
     width: 100%;
-    grid-template-columns: 10rem auto auto 14rem;
+    grid-template-columns: 11rem 25rem auto 14rem;
     grid-template-areas:
         "icon name tags owner_edit";
     border: 1px solid black;
@@ -392,7 +378,7 @@ nav img {
     grid-template-columns: auto auto;
     grid-template-areas:
         "file folder";
-
+        
 }
 
 .add_file {
@@ -515,15 +501,6 @@ nav img {
     margin: auto;
 }
 
-.itemshowcase {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.unresizable {
-    resize: none;
-}
 
 /* Modal Content */
 .groupcreation-content {
@@ -550,12 +527,6 @@ nav img {
 
 .center {
     text-align: center;
-}
-
-.centerelement {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
 }
 
 .redbg {
