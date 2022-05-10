@@ -31,20 +31,23 @@
             {% else %}
             <p>This file has no description...</p>
             {% endif %}
+            {% if item.editable %}
             <a class="btn" style="margin: 15px;"
                 href="{{url_for('edit', path = item.path, name = item.itemname )}}">Edit</a>
             <a class="btn redbg" onclick="return confirm('Are you sure you want to delete this file?');"
                 style="margin:15px;" href="{{url_for('delete_item', id = item.id )}}">Delete</a>
+            {% endif %}
         </div>
     </div>
+    {% if current_user.id != 0 %}
     <div class="comment">
         <h4>Write a comment...</h4>
         <form method="POST">
             {{commentform.csrf_token}}
             {{commentform.comment(class = "form-control")}}
             {{commentform.submit(class = "btn")}}
-
     </div>
+    {% endif %}
     </form>
     <div class="commentsection">
         <h4>Comments({{comment_amount}})</h4>

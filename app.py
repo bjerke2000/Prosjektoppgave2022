@@ -30,7 +30,7 @@ DELETED_USER=8
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-login_manager.login_message = 'User needs to be logged in to view this poop!'
+login_manager.login_message = 'User needs to be logged in to view this!'
 login_manager.login_message_category = 'error'
 
 

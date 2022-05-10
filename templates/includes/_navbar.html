@@ -5,13 +5,15 @@
         <li>
         </li>
         {% if loginpage %}
+        <li><a href="{{url_for('index')}}" class="btn">Home</a></li>
         {% elif viewing %}
         <li><a class="btn" href="{{url_for('previous', path = current_folder.path)}}">Go back</a></li>
         <li><a class="btn" href="{{url_for('usergroupmanagement')}}">Manage Groups</a></li>
+        {% endif %}
+        {% if current_user.id != 0 %}
         <li><a href="{{url_for('logout')}}" class="btn">Logout</a></li>
-
         {% else %}
-        <li><a href="{{url_for('logout')}}" class="btn">Logout</a></li>
+        <li><a href="{{url_for('login')}}" class="btn">Login</a></li>
         {% endif %}
         {% if admin %}
         <li><a href="{{url_for('admin')}}" class="btn redbg">Admin Page</a></li>
