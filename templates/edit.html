@@ -12,6 +12,7 @@
         {% if text %}
         <div class="mb-3">
             {{ form.text(class = "form-control unresizable") }}
+            <!--Scaling the textarea form to fit all text in the text document.-->
             <script>
                 $("textarea").each(function () {
                     this.setAttribute("style", "height:" + (this.scrollHeight) + "px;overflow-y:hidden;");

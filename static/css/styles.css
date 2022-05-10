@@ -23,6 +23,7 @@ body {
     background: var(--background-color);
     color: white;
     padding-bottom: 2.5rem;
+    height: 100%;
 }
 
 h1,
@@ -57,8 +58,8 @@ img {
 
 .master-content {
     display: flex;
-    justify-content: center;
-    max-height: 25vw;
+    max-height: auto;
+    float: left;
 }
 
 
@@ -82,34 +83,31 @@ img {
 }
 
 .comments {
-    max-width: 30%;
-    margin: auto;
+    max-width: 66%;
+    margin-top: 2%;
     padding: 0 2rem;
-    text-align: center;
 }
 
 .mediacontent {
     display: flex;
     padding: 0 2rem;
     display: inline-block;
-    margin-right: 10%;
-    object-fit: scale-down;
-    width: 40vw;
+    width: 66%;
 }
 
 .fileshowcase {
-    border: 1px solid black;
     width: 75vw;
     display: flex;
     flex-direction: column;
     margin: auto;
     background-color: #555555;
     padding: 2%;
+    margin-top: -20px;
+    height: auto;
 }
 
 .comment {
     max-width: 40%;
-    margin: auto;
     padding: 0 2rem;
     background-color: #f4f4f4;
     border-radius: 25px;
@@ -139,8 +137,8 @@ img {
 }
 
 .sidebar {
-    height: 30%;
-    width: 10vw;
+    height: fit-content;
+    width: 15vw;
     background-color: #f4f4f4;
     border-radius: 5px;
     display: inline-block;
