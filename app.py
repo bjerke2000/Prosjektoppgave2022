@@ -203,10 +203,9 @@ def PermissionCreator(form, group_priv_dict={}): #Makes priv dictionairy from in
     for group in group_priv_dict.keys():
         if group not in form.rw_groups.data and group not in form.r_groups.data:
             group_priv_dict[group]='none'
-    match form.private.data:
-        case 0:
+    if form.private.data == 0:
             group_priv_dict[ALLUSERSGROUP] = 'r'
-        case 1:
+    elif form.private.data == 1:
             group_priv_dict[ALLUSERSGROUP] = 'none'
     return group_priv_dict
 
@@ -481,8 +480,7 @@ def item(path, name):
         return redirect(url_for('previous', path=path))
     item.hitcount += 1
     db.session.commit()
-    match item.type:
-        case 0:#Show contents of folder
+    if item.type == 0: #Show contents of folder
             searchform = SearchForm()
             if searchform.validate_on_submit():
                 return redirect(url_for('search', keywords = searchform.searchfield.data))
@@ -495,7 +493,7 @@ def item(path, name):
                     contents.append(items)
             return render_template('folder.html', contents = contents, current_folder = item, viewing=True, folder=True, path = path, admin = AdminTest(), searchform = searchform)
 
-        case 1: #Show contents if file
+    elif item.type == 1: #Show contents if file
             path = item.path.replace('-','/')[4:]+item.itemname.split('~')[1]
             ItemInfoLoader(item, True)
             if item.filetype == '':
@@ -629,20 +627,19 @@ def delcomment(id):
 @login_required
 def admin_delete(table, id):
     if AdminTest():
-        match table:
-            case 'users':
+        if table == 'users':
                 DeleteUser(id)
                 flash(f'User succesfully deleted', 'success')
-            case 'items':
+        elif table == 'items':
                 DeleteItem(id)
                 flash(f'Item succesfully deleted', 'success')
-            case 'groups':
+        elif table == 'groups':
                 DeleteGroup(id)
                 flash('Group succesfully deleted', 'success')
-            case 'tags':
+        elif table == 'tags':
                 DeleteTag(id)
                 flash(f'Tag succesfully deleted', 'success')
-            case 'comments':
+        elif table == 'comments':
                 DeleteComment(id)
                 flash(f'Comment succesfully deleted', 'success')             
         return redirect(url_for('admin'))
