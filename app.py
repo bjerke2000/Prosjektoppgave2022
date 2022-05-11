@@ -531,14 +531,17 @@ def search(keywords):
     searchform = SearchForm()
     if searchform.validate_on_submit():
         return redirect(url_for('search', keywords = searchform.searchfield.data))
-    keyword_list = split(', |  |; ', keywords)
+    keyword_list = split(', | |; ', keywords)
+    tag_hits=[]
     for word in keyword_list:
-        tag_hits = TagModel.query.filter(TagModel.tag.like(f'%{word}%')).all()
+        tag_hits = tag_hits + TagModel.query.filter(TagModel.tag.like(f'%{word}%')).all()
+    item_hits = []
     for word in keyword_list:
-        item_hits = ItemModel.query.filter(ItemModel.itemname.like(f'%{word}%')).all()
+        item_hits = item_hits + ItemModel.query.filter(ItemModel.itemname.like(f'%{word}%')).all()
     for tag in tag_hits:
-        item_hits2 = ItemModel.query.filter(ItemModel.tags.like(f'%,{tag.id},%')).all()
-    content = set(item_hits+item_hits2)
+        item_hits = item_hits + ItemModel.query.filter(ItemModel.tags.like(f'%,{tag.id},%')).all()
+    else:
+        content = set(item_hits)
     for item in content:
         ItemInfoLoader(item)
     return render_template('folder.html', contents = content,  folder=True, admin = AdminTest(), searchform = searchform)
