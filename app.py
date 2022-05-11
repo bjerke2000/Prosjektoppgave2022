@@ -3,20 +3,25 @@ import uuid as uuid
 from datetime import date, datetime, timedelta
 from types import NoneType
 from sqlalchemy import nullslast, update
-from flask import Flask, flash, redirect, render_template, session, url_for
+from flask import Flask, flash, redirect, render_template, session, url_for, request
+from flask_mail import Mail, Message
 from flask_login import (LoginManager, UserMixin, current_user, login_required,
                          login_user, logout_user, AnonymousUserMixin)
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 from sqlalchemy.ext.mutable import Mutable
+import socket
 from forms import *
+from random import randint
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "esketit"
 app.config[
     "SQLALCHEMY_DATABASE_URI"
 ] = "mysql+pymysql://stud_v22_didriksenchr:R275uX1WYcttAKhb@kark.uit.no/stud_v22_didriksenchr"
+app.config['MAIL_SERVER'] = 'smtpserver.uit.no'
+app.config['MAIL_PORT'] = 587
 
 UPLOAD_FOLDER = 'static/content'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -172,6 +177,7 @@ class Anonymous(AnonymousUserMixin):
   def __init__(self):
     self.id = 0
     self.groups = ',1,'
+    self.registerform = EmailVerify()
 
 login_manager.anonymous_user = Anonymous
 #===========================FUNCTIONS===================================
@@ -406,21 +412,40 @@ def logout():
 def register():
     form = RegisterForm()
     form.groups.choices = GroupTupleManager()
-    if form.validate_on_submit():
+    emailform = EmailVerify()
+    if form.validate_on_submit() or emailform.validate_on_submit():
         user = UserModel.query.filter_by(email=form.email.data).first()
         if user is None:
+            if emailform.validate_on_submit():
+                    if emailform.verify_code.data == str(emailform.code.data):
+                    #if 'Christopher Bjerke Didriksen' == emailform.name.data:
+                        grouplist = emailform.groups.data.split(',')
+                        grouplist.append(ALLUSERSGROUP)  # adds all users group
+                        group_str = ',' + str(grouplist).strip("[]") + ','
+                        user = UserModel(name=emailform.name.data,
+                                         email=emailform.email.data,
+                                         password_hash=emailform.password_hash.data,
+                                         groups=group_str
+                                         )
+                        db.session.add(user)
+                        db.session.commit()
+                        return redirect(url_for('login'))
+                    flash('Incorrect code')
+                    return render_template('verify.html', form = emailform)
             hashed_pw = generate_password_hash(form.password.data, 'sha256')
-            grouplist = form.groups.data
-            grouplist.append(ALLUSERSGROUP)  # adds all users group
-            group_str = ',' + str(grouplist).strip("[]") + ','
-            user = UserModel(name=form.name.data,
-                             email=form.email.data,
-                             password_hash=hashed_pw,
-                             groups=group_str
-                             )
-            db.session.add(user)
-            db.session.commit()
-            return redirect(url_for('login'))
+            code = randint(100000, 999999)
+            emailformdata = EmailVerifyHiddenLoader(code , form.name.data, form.email.data, hashed_pw, form.groups.data)
+            emailform.populate_obj=emailformdata
+            emailform.password_hash.data = hashed_pw
+            emailform.groups.data = str(form.groups.data).strip('[]')
+            emailform.code.data=str(code)
+            mail = Mail(app)
+            msg = Message('test mail', sender='Knut.Collin@uit.no', recipients =[form.email.data])
+            msg.body = 'Plain text body'
+            msg.html = 'HTML <b>Bekreft epostadresse med kode:</b>' + str(code)
+            with app.app_context():
+              mail.send(msg)
+            return render_template('verify.html', form = emailform)
         else:
             flash('Email already exists', 'error')
             return render_template('register.html', form=form)

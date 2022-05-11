@@ -1,5 +1,5 @@
-from ast import Sub
-from tokenize import String
+import email
+from turtle import hideturtle
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FileField, DateField, SelectMultipleField, SelectField, HiddenField
 from wtforms.validators import DataRequired, EqualTo, Length, Email
@@ -39,6 +39,27 @@ class RegisterForm(FlaskForm):
         coerce=int
     )
     submit = SubmitField("Register")
+
+class EmailVerifyHiddenLoader():
+    def __init__(self,code, name, email, password_hash, groups) -> None:
+        self.verify_code = str(code)
+        self.code = str(code)
+        self.name = str(name)
+        self.email = email
+        self.password_hash = str(password_hash)
+        self.groups = str(groups)
+
+class EmailVerify(FlaskForm):
+    name = HiddenField('name')
+    email = HiddenField('email')
+    password_hash = HiddenField('password_hash')
+    groups = HiddenField('groups')
+    code = HiddenField('code')
+    verify_code = StringField('Verification-code',
+        validators=[DataRequired(),Length(min=6,max=6)],
+        render_kw={'placeholder':'verification-code', 'autofocus':True}
+    )
+    submit = SubmitField('Verify')
 
 class LoginForm(FlaskForm):
     email = StringField(
