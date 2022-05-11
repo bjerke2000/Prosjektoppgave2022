@@ -1,3 +1,4 @@
+from contextlib import redirect_stderr
 import os
 import uuid as uuid
 from datetime import date, datetime, timedelta
@@ -341,6 +342,8 @@ def GroupManagerLoader(groups):
     for id in groups.split(',')[1:-1]:
         groups_dict[id] = GroupModel.query.filter_by(id = int(id)).first().group
     users = UserModel.query.all()
+    if str(ADMINGROUP) not in groups_dict:
+        groups_dict.pop(str(ALLUSERSGROUP))
     for group in groups_dict.keys():
         group_members_dict[group]=[]
         for user in users:
@@ -420,7 +423,9 @@ def register():
             if emailform.validate_on_submit():
                     if emailform.verify_code.data == str(emailform.code.data):
                         groupstr = emailform.groups.data
-                        group_str = ',' + str(ALLUSERSGROUP) + ',' + groupstr + ','      # adds all users group
+                        if len(groupstr) > 0:
+                            groupstr = groupstr + ','
+                        group_str = ',' + str(ALLUSERSGROUP) + ',' + groupstr
                         user = UserModel(name=emailform.name.data,
                                          email=emailform.email.data,
                                          password_hash=emailform.password_hash.data,
@@ -642,13 +647,24 @@ def admin_delete(table, id):
         return redirect(url_for('admin'))
     return redirect(url_for('index'))
     
-@app.route('/dashboard')
+@app.route('/edituser', methods=['GET','POST'])
 @login_required
-def dashboard():
-    groups_dict = {}
-    for id in current_user.groups:
-        groups_dict[id] = GroupModel.query.filter_by(id = id).first().group
-    return render_template('dashboard.html', groups_dict = groups_dict)
+def edituser():
+    object = UserEditLoader(current_user.name)
+    form = UserEditForm(obj = object)
+    form.groups.choices = [(g.id, g.group) for g in GroupModel.query.order_by('group')][2:] #Exclude first two values since they are admin and all users
+    if form.validate_on_submit():
+        user = UserModel.query.filter_by(id=current_user.id).first()
+        if form.password.data != '':
+            hashed_pw = generate_password_hash(form.password.data, 'sha256')
+            user.password_hash = hashed_pw
+        user.name = form.name.data
+        groups =[ALLUSERSGROUP]
+        groups = groups + form.groups.data
+        user.groups = ',' + str(groups).strip('[]') + ','
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('edituser.html', form=form)
 
 @app.route('/usergroupmanagement', methods=['POST','GET'])
 @login_required
@@ -672,7 +688,6 @@ def usergroupmanagement(): #Shows groups that user is apart of
 def admingroupmanagement(): #Shows all groups
     if AdminTest():
         groupform = GroupForm()
-        groupuserform = AddUserToGroupForm()
         groups = ','
         for group in GroupModel.query.all():
             groups = groups + str(group.id)+','

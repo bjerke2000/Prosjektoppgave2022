@@ -13,13 +13,18 @@
     <h1 class="mb-3">Sign up</h1>
     <form method="POST">
         {{ form.csrf_token() }}
-        {{ form.name }}
-        {{ form.email }}
-        {{ form.password_hash }}
-        {{ form.code }}
-        {{ form.groups }}
         <div class="mb-3">
-            {{ form.verify_code(class='form-control') }}
+            {{ form.name(class = "form-control") }}
+        </div>
+        <div class="mb-3">
+            {{ form.password(class = "form-control") }}
+        </div>
+        <div class="mb-3">
+            {{ form.password_confirm(class='form-control') }}
+        </div>
+        <h3>Group memberships</h3>
+        <div class="mb-3">
+            {{ form.groups(class='form-control') }}
         </div>
         <div class="mb-3">
             {{ form.submit(class = "btn") }}

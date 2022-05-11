@@ -1,5 +1,3 @@
-import email
-from turtle import hideturtle
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FileField, DateField, SelectMultipleField, SelectField, HiddenField
 from wtforms.validators import DataRequired, EqualTo, Length, Email
@@ -251,3 +249,28 @@ class SearchForm(FlaskForm):
     render_kw={'placeholder':'filename or tags separated by comma...'}
     )
     submit = SubmitField('Search')
+
+class UserEditLoader():
+    def __init__(self, name) -> None:
+        self.name = name
+
+class UserEditForm(FlaskForm):
+    name = StringField(
+        "Name",
+        validators=[DataRequired(), Length(max=150)],
+        render_kw={"autofocus":True, "placeholder": "name"},
+    )
+    password = PasswordField(
+        "Password",
+        validators=[EqualTo("password_confirm", "Passwords do not match")],
+        render_kw={"placeholder":"Password"}
+    )
+    password_confirm = PasswordField(
+        "Confirm password",
+        render_kw={"placeholder":"Confirm password"}
+    )
+    groups = SelectMultipleField(
+        "Select Field",
+        coerce=int
+    )
+    submit = SubmitField("Register")
