@@ -176,6 +176,12 @@ img {
 
 }
 
+.searchbar {
+    display: flex;
+    align-content: center;
+    width: 20vw;
+}
+
 #navbarlogo {
     margin-left: 4vw;
 }
@@ -464,7 +470,7 @@ nav img {
 .tags {
     grid-area: tags;
     display: grid;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto auto ;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto;
     grid-template-areas:
         "t1 t2 t3 t4 t5 t6 t7 t8 t9 10";
     position: absolute;

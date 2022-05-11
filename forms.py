@@ -248,6 +248,6 @@ class AddUserToGroupForm(FlaskForm):
 
 class SearchForm(FlaskForm):
     searchfield = StringField('Searchfield',
-    render_kw={'placeholder':'search by tags and filename...'}
+    render_kw={'placeholder':'filename or tags separated by comma...'}
     )
     submit = SubmitField('Search')
