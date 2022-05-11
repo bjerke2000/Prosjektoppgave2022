@@ -1,19 +1,21 @@
 <nav class="navbar">
     <a id="navbarlogo" href="/"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="MyFiles"></a>
-
-    {% if folder %}
-    <form method="POST">
-        {{ searchform.csrf_token() }}
-        <div class="mb-3">
-            {{ searchform.searchfield(class = "form-control") }}
-            {{ searchform.submit(class = "btn") }}
-        </div>
-    </form>
-    {% endif %}
     
     <ul id="navbarbuttons">
         <li>
         </li>
+        {% if folder %}
+        <li>
+            <form method="POST">
+                {{ searchform.csrf_token() }}
+                <div class="mb-3 searchbar">
+                    {{ searchform.searchfield(class = "form-control searchfield") }}
+                    {{ searchform.submit(class = "btn")
+                    }}
+                </div>
+            </form>
+        </li>
+        {% endif %}
         {% if loginpage %}
         <li><a href="{{url_for('index')}}" class="btn">Home</a></li>
         {% elif viewing %}
