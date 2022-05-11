@@ -23,6 +23,7 @@
         {% endif %}
         {% if current_user.id != 0 %}
         <li><a class="btn" href="{{url_for('usergroupmanagement')}}">My Groups</a></li>
+        <li><a href="{{url_for('edituser')}}" class="btn">Edit Account</a></li>
         <li><a href="{{url_for('logout')}}" class="btn">Logout</a></li>
         {% else %}
         <li><a href="{{url_for('login')}}" class="btn">Login</a></li>
