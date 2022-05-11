@@ -14,6 +14,7 @@ from sqlalchemy.ext.mutable import Mutable
 import socket
 from forms import *
 from random import randint
+from re import split
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "esketit"
@@ -418,10 +419,8 @@ def register():
         if user is None:
             if emailform.validate_on_submit():
                     if emailform.verify_code.data == str(emailform.code.data):
-                    #if 'Christopher Bjerke Didriksen' == emailform.name.data:
-                        grouplist = emailform.groups.data.split(',')
-                        grouplist.append(ALLUSERSGROUP)  # adds all users group
-                        group_str = ',' + str(grouplist).strip("[]") + ','
+                        groupstr = emailform.groups.data
+                        group_str = ',' + str(ALLUSERSGROUP) + ',' + groupstr + ','      # adds all users group
                         user = UserModel(name=emailform.name.data,
                                          email=emailform.email.data,
                                          password_hash=emailform.password_hash.data,
@@ -479,6 +478,8 @@ def item(path, name):
     match item.type:
         case 0:#Show contents of folder
             searchform = SearchForm()
+            if searchform.validate_on_submit():
+                return redirect(url_for('search', keywords = searchform.searchfield.data))
             path = item.path.replace('-','/')[4:]+item.itemname.replace('-','/')
             unchecked_contents = ItemModel.query.filter_by(path = f"{item.path}{item.itemname.strip('-').split('~')[0]}-")
             contents = []
@@ -524,6 +525,24 @@ def previous(path):
         previous_path = previous_path + part + "-"
         print(previous_path)
     return redirect(url_for('item', path=previous_path, name=path_list[-2:-1]))
+
+@app.route('/search/<string:keywords>', methods=['GET','POST'])
+def search(keywords):
+    searchform = SearchForm()
+    if searchform.validate_on_submit():
+        return redirect(url_for('search', keywords = searchform.searchfield.data))
+    keyword_list = split(', |  |; ', keywords)
+    for word in keyword_list:
+        tag_hits = TagModel.query.filter(TagModel.tag.like(f'%{word}%')).all()
+    for word in keyword_list:
+        item_hits = ItemModel.query.filter(ItemModel.itemname.like(f'%{word}%')).all()
+    for tag in tag_hits:
+        item_hits2 = ItemModel.query.filter(ItemModel.tags.like(f'%,{tag.id},%')).all()
+    content = set(item_hits+item_hits2)
+    for item in content:
+        ItemInfoLoader(item)
+    return render_template('folder.html', contents = content,  folder=True, admin = AdminTest(), searchform = searchform)
+
 
 #New Folder
 @app.route("/newfolder/<string:path>/<string:parent>", methods=['GET','POST'])
@@ -677,7 +696,7 @@ def edit(path, name):
     groups = GroupTupleManager()
     if item.itemname.split('.')[-1] in ['txt']:
         ItemInfoLoader(item, True)
-        object = EditTextFileFormLoader(item.content, item.description ,item.named_tags, list(item.group_privs.keys()) , item.private)
+        object = EditTextFileFormLoader(item.content , item.description ,item.named_tags, list(item.group_privs.keys()) , item.private)
         form = EditTextFileForm(obj=object)
         text = True
     else:

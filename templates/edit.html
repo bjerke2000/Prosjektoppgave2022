@@ -9,20 +9,7 @@
 <div class="container">
     <div class="inputform">
         <h1 class="mb-3">Editing {{item.itemname.split('~')[1]}}</h1>
-        {% if text %}
-        <div class="mb-3">
-            {{ form.text(class = "form-control unresizable") }}
-            <!--Scaling the textarea form to fit all text in the text document.-->
-            <script>
-                $("textarea").each(function () {
-                    this.setAttribute("style", "height:" + (this.scrollHeight) + "px;overflow-y:hidden;");
-                }).on("input", function () {
-                    this.style.height = "auto";
-                    this.style.height = (this.scrollHeight) + "px";
-                });
-            </script>
-        </div>
-        {% elif item.filetype == 'picture' %}
+        {% if item.filetype == 'picture' %}
         <div class="mediacontent centerelement">
             <img src="/static/content/{{item.itemname}}" alt="{{item.itemname}}">
         </div>
@@ -37,6 +24,20 @@
         {% endif %}
         <form method="POST">
             {{ form.csrf_token() }}
+            {% if text %}
+            <div class="mb-3">
+                {{ form.text(class = "form-control unresizable") }}
+                <!--Scaling the textarea form to fit all text in the text document.-->
+                <script>
+                    $("textarea").each(function () {
+                        this.setAttribute("style", "height:" + (this.scrollHeight) + "px;overflow-y:hidden;");
+                    }).on("input", function () {
+                        this.style.height = "auto";
+                        this.style.height = (this.scrollHeight) + "px";
+                    });
+                </script>
+            </div>
+            {% endif %}
             Description:
             <div class="mb-3">
                 {{ form.description(class = "form-control") }}

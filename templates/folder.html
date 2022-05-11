@@ -4,20 +4,22 @@
 
 <div class="container">
     <div class="card-grid">
+        {% if viewing %}
         <div class="add">
             <a href="{{url_for('addfile', path=current_folder.path, parent=current_folder.itemname)}}">
             <div class="add_file">
                 <img src="/static/images/file.svg" alt="New item">
             </div>
             </a>
-
             <a href="{{url_for('newfolder', path = current_folder.path, parent=current_folder.itemname)}}">
             <div class="add_folder">
                 <img src="/static/images/folder.svg" alt="New item">
             </div>
             </a>
         </div>
+        {% endif %}
     </div>
+        {% if contents %}
         {% for item in contents %}
             <div class="card">
                 <div class="thumbnail">
@@ -64,6 +66,9 @@
                     {% endif %}
             </div>
         {% endfor %}
+        {% else %}
+            <h3></h3>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
