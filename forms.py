@@ -245,3 +245,9 @@ class AddUserToGroupForm(FlaskForm):
         render_kw={'placeholder':'emails separated by ","'}
     )
     submit = SubmitField('Create Group')
+
+class SearchForm(FlaskForm):
+    searchfield = StringField('Searchfield',
+    render_kw={'placeholder':'search by tags and filename...'}
+    )
+    submit = SubmitField('Search')

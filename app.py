@@ -478,6 +478,7 @@ def item(path, name):
     db.session.commit()
     match item.type:
         case 0:#Show contents of folder
+            searchform = SearchForm()
             path = item.path.replace('-','/')[4:]+item.itemname.replace('-','/')
             unchecked_contents = ItemModel.query.filter_by(path = f"{item.path}{item.itemname.strip('-').split('~')[0]}-")
             contents = []
@@ -485,7 +486,7 @@ def item(path, name):
                 if PermissionHandler("r", items):
                     ItemInfoLoader(items)
                     contents.append(items)
-            return render_template('folder.html', contents = contents, current_folder = item, viewing=True, folder=True, path = path, admin = AdminTest())
+            return render_template('folder.html', contents = contents, current_folder = item, viewing=True, folder=True, path = path, admin = AdminTest(), searchform = searchform)
 
         case 1: #Show contents if file
             path = item.path.replace('-','/')[4:]+item.itemname.split('~')[1]

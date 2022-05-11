@@ -1,6 +1,14 @@
 <nav class="navbar">
     <a id="navbarlogo" href="/"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="MyFiles"></a>
 
+    <form method="POST">
+        {{ searchform.csrf_token() }}
+        <div class="mb-3">
+            {{ searchform.searchfield(class = "form-control") }}
+            {{ searchform.submit(class = "btn") }}
+        </div>
+    </form>
+
     <ul id="navbarbuttons">
         <li>
         </li>
@@ -8,9 +16,9 @@
         <li><a href="{{url_for('index')}}" class="btn">Home</a></li>
         {% elif viewing %}
         <li><a class="btn" href="{{url_for('previous', path = current_folder.path)}}">Go back</a></li>
-        <li><a class="btn" href="{{url_for('usergroupmanagement')}}">Manage Groups</a></li>
         {% endif %}
         {% if current_user.id != 0 %}
+        <li><a class="btn" href="{{url_for('usergroupmanagement')}}">My Groups</a></li>
         <li><a href="{{url_for('logout')}}" class="btn">Logout</a></li>
         {% else %}
         <li><a href="{{url_for('login')}}" class="btn">Login</a></li>
