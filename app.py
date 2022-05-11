@@ -166,6 +166,7 @@ class CommentsModel(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))#fk to users id, to know who made the comment
     comment = db.Column(db.String(150), nullable=False) #comment text
     date = db.Column(db.DateTime, nullable = False)#date posted
+    deleted = db.Column(db.Boolean)#0 not deleted, 1 deleted
     username = ''
 
 class TagModel(db.Model):
@@ -244,7 +245,7 @@ def ItemInfoLoader(item, isitemroute=False):
         type = item.itemname.split('~')[1].split('.')[-1] #Gets filetype
         if type in text_types:
             if isitemroute:
-                with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'r', encoding='utf-8') as f:
+                with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'r', encoding='utf-8', newline='\n') as f:
                         lines = f.readlines()
                 item.content=lines
             item.filetype = 'text'
@@ -279,7 +280,7 @@ def DeleteItem(id):#Deletes item and all comments attatched
     comments = CommentsModel.query.filter_by(item_id = id)
     item = ItemModel.query.filter_by(id = id).first()
     for comment in comments:
-        db.session.delete(comment)
+        comment.deleted = 1
     path = item.path
     name = item.itemname
     db.session.delete(item)
@@ -301,7 +302,7 @@ def DeleteUser(id): #Deletes a user and reassigns all items and comments from th
 def DeleteComment(id): #Deletes a comment and returns parent for routing purposes
     comment = CommentsModel.query.filter_by(id=id).first()
     parentitem = ItemModel.query.filter_by(id=comment.item_id).first()
-    db.session.delete(comment)
+    comment.deleted = 1
     db.session.commit()
     return parentitem.path, parentitem.itemname
 
@@ -506,7 +507,8 @@ def item(path, name):
                     item_id = item.id,
                     user_id = current_user.id,
                     comment = commentform.comment.data,
-                    date = datetime.now()
+                    date = datetime.now(),
+                    deleted = 0
                 )
                 db.session.add(newcomment)
                 db.session.commit()
@@ -550,7 +552,6 @@ def search(keywords):
     for item in content:
         ItemInfoLoader(item)
     return render_template('folder.html', contents = content,  folder=True, admin = AdminTest(), searchform = searchform)
-
 
 #New Folder
 @app.route("/newfolder/<string:path>/<string:parent>", methods=['GET','POST'])
@@ -726,7 +727,7 @@ def edit(path, name):
     form.rw_groups.choices = groups
     if form.validate_on_submit():
         if text:
-            with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'w', encoding='utf-8') as f:
+            with open(os.path.join(app.config['UPLOAD_FOLDER'], item.itemname), 'w', encoding='utf-8', newline='\n') as f:
                 f.write(form.text.data)
         item.description = form.description.data
         item.tags = TagManager(form.tags.data)
